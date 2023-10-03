@@ -1,0 +1,16 @@
+flights.csv:
+  source: "https://www.kaggle.com/datasets/polartech/flight-data-with-1-million-or-more-records"
+  download_link: "https://www.kaggle.com/datasets/polartech/flight-data-with-1-million-or-more-records/download?datasetVersionNumber=1"
+  data_download_date: 2023-09-14
+
+GlobalAirportDatabase:
+  source: "https://www.partow.net/miscellaneous/airportdatabase/index.html"
+  download_link: "https://www.partow.net/downloads/GlobalAirportDatabase_CountryDecLatLon.zip"
+  data_download_date: 2023-09-14
+
+airport:
+  source: "https://ourairports.com/data/"
+  data_download_date: 2023-09-14
+
+
+  
