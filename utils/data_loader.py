@@ -76,13 +76,15 @@ def load_flight_data(data_filepath="data/flights.csv"):
 
 ##################################################################
 
-def all_airports_list(flight_data):
+
+def all_airports_list(flight_data, from_col="from_airport_code", dest_col="dest_airport_code"):
     """
-    List all unique airports in the flight dataset
+    List all unique airports in the flight dataset based on specified columns
     """
-    depature_airports = set(flight_data["from_airport_code"])
-    arrival_airports = set(flight_data["dest_airport_code"])
+    depature_airports = set(flight_data[from_col])
+    arrival_airports = set(flight_data[dest_col])
     return list(set.union(depature_airports, arrival_airports))
+
 
 def add_airport_degree(airport_data, flight_data):
     """
