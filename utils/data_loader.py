@@ -117,6 +117,7 @@ def load_flight_data(data_filepath="data/flights.csv"):
 
 ##################################################################
 
+
 def all_airports_list(flight_data, from_col="from_airport_code", dest_col="dest_airport_code"):
     """
     List all unique airports in the flight dataset based on specified columns
