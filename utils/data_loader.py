@@ -41,6 +41,42 @@ def load_airport_data(data_filepath="data/GlobalAirportDatabase/GlobalAirportDat
 
     return airport_data
 
+def split_and_clean_column(df, column_name, seperator='|', remove_head=0, remove_tail=None):
+    """splits and cleans a string column of a dataframe
+
+    Args:
+        df (pandas.DataFrame): dataframe to be modified
+        column_name (str): column to be modified
+        seperator (str, optional): what to split the column by. Defaults to '|'.
+        remove_head (int, optional): how many characters to remove from the start of the string. Defaults to 0.
+        remove_tail (int, optional): how many characters to remove from the end of the string. Defaults to None.
+
+    Returns:
+        pandas.DataFrame: modified dataframe
+    """
+    df[column_name] = [[y.strip() for y in 
+                        x[remove_head:-remove_tail if remove_tail else None].split(seperator)]
+                       if type(x) == str else [] for x in df[column_name]]
+    return df    
+    
+def map_column(df, column_name, mapping_dict, is_list=False):
+    """Map a column in a dataframe to a new column using a mapping dictionary
+
+    Args:
+        df (pandas.DataFrame): dataframe to be modified
+        column_name (str): column to be mapped
+        mapping_dict (dict): dict for mapping strings
+        is_list (bool, optional): whether the column is a list. Defaults to False.
+
+    Returns:
+       pandas.DataFrame: modified dataframe
+    """
+    if is_list:
+        df[column_name] = [[mapping_dict[y] if y in mapping_dict else y for y in x] for x in df[column_name]]
+    else:
+        df[column_name] = df[column_name].map(mapping_dict)
+    return df
+
 def load_flight_data(data_filepath="data/flights.csv"):
     assert os.path.exists(data_filepath), f"{data_filepath} not found! Make sure to run from root folder!"
     data = pd.read_csv( data_filepath)
@@ -70,6 +106,11 @@ def load_flight_data(data_filepath="data/flights.csv"):
     data['arrival_time'] = pd.to_datetime(data['arrival_time'], format='%Y-%m-%d %H:%M:%S')
     data['scan_date'] = pd.to_datetime(data['scan_date'], format='%Y-%m-%d %H:%M:%S')
     data['duration'] = pd.to_timedelta(data['duration'], unit='m')
+    
+    # Miscellaneous mapping
+    data = map_column(split_and_clean_column(data, 'aircraft_type'), 'aircraft_type', {'Airbus A318': 'Example Mapping'}, is_list=True)
+    data = map_column(split_and_clean_column(data, 'airline_name', remove_head=1, remove_tail=1), 'airline_name', {}, is_list=True)
+    data = split_and_clean_column(data, 'flight_number')
 
     return data
 
