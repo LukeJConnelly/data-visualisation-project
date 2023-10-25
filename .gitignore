@@ -1,5 +1,6 @@
 flights.csv
 data/
+temp-plot.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
