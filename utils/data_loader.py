@@ -77,6 +77,35 @@ def map_column(df, column_name, mapping_dict, is_list=False):
         df[column_name] = df[column_name].map(mapping_dict)
     return df
 
+def min_max_scaling(column):
+    '''
+    Min-Max scales a column
+    (used in clean_co2 function)
+    '''
+    return (column - column.min()) / (column.max() - column.min())
+
+def clean_co2(data):
+    '''
+    Cleans the co2 columns
+    - normalises the co2_emissions collumn
+    - re-calculates the avg_co2_emissions_for_this_route column
+    - re-calculates the co2_percentage column
+    (necessary because documentation for the data was lacking)
+    '''
+    # scaling the co2_emissions collumn
+    data["co2_emissions"] = min_max_scaling(data["co2_emissions"])
+
+    # calculating and inserting avg c02 emissions for each route
+    groups = data.groupby(["from_airport_code", "dest_airport_code"])["co2_emissions"].mean()
+    for index, row in data.iterrows():
+        data.at[index, "avg_co2_emission_for_this_route"] = groups[row["from_airport_code"]][row["dest_airport_code"]]
+    
+    # calculating and incerting difference between a flight and its' average co2 emissons
+    for index, row in data.iterrows():
+        data.at[index, "co2_percentage"] = ((row["avg_co2_emission_for_this_route"] - row["co2_emissions"])/row["avg_co2_emission_for_this_route"])
+    
+    return data
+
 def load_flight_data(data_filepath="data/flights.csv"):
     assert os.path.exists(data_filepath), f"{data_filepath} not found! Make sure to run from root folder!"
     data = pd.read_csv( data_filepath)
@@ -111,6 +140,7 @@ def load_flight_data(data_filepath="data/flights.csv"):
     data = map_column(split_and_clean_column(data, 'aircraft_type'), 'aircraft_type', {'Airbus A318': 'Example Mapping'}, is_list=True)
     data = map_column(split_and_clean_column(data, 'airline_name', remove_head=1, remove_tail=1), 'airline_name', {}, is_list=True)
     data = split_and_clean_column(data, 'flight_number')
+    data = clean_co2(data)
 
     return data
 
