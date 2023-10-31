@@ -11,21 +11,35 @@ df = pd.read_csv('data/flights.csv')
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-flight_data = data_loader.load_flight_data()
-airport_data = data_loader.load_airport_data(flight_data=flight_data,
-        with_airport_degree=True)
-airport_data = airport_data[airport_data['flight_degree'] >= 1]
+airport_data = pd.DataFrame({'lat': [0, 50], 'lon': [0, 50]}, index=['ETC', 'DUH'])
+flight_data = pd.DataFrame({'src': ['ETC'], 'dest': ['DUH']}, index=['3X4MPL3'])
 
 def get_timepicker():
     return html.Div('Time picker here')
 
 def get_map():
     fig = go.Figure()
-    fig.add_trace(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
-                                   lon=airport_data['Longitude Decimal Degrees'],
+    # AIRPORTS
+    fig.add_trace(go.Scattermapbox(lat=airport_data['lat'],
+                                   lon=airport_data['lon'],
                                    mode='markers',
                                    marker=go.scattermapbox.Marker(size=5, color='black'),
-                                   text=airport_data['IATA Code']))
+                                   text=airport_data.index))
+    # FLIGHTS
+    for i in range(len(flight_data)):
+        # lookup needs cleaning
+        fig.add_trace(
+                    go.Scattermapbox(
+                        mode='lines',
+                        lat=[airport_data.loc[flight_data.iloc[i]['src'], 'lat'], airport_data.loc[flight_data.iloc[i]['dest'], 'lat']],
+                        lon=[airport_data.loc[flight_data.iloc[i]['src'], 'lon'], airport_data.loc[flight_data.iloc[i]['dest'], 'lon']],
+                        line=go.scattermapbox.Line(
+                            width=1,
+                            color="red"
+                        ),
+                        name=str(flight_data.index[i])
+                    )
+                )
     fig.update_layout(mapbox_style='open-street-map', margin={'r': 0, 't': 0, 'l': 0, 'b': 0,})
     return dcc.Graph(id='map', figure=fig)
 
