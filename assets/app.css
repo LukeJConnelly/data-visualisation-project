@@ -1,0 +1,9 @@
+#sidebar-contents {
+    border-left: 3px solid black;
+    padding-left: 20px;
+}
+
+#sidebar-graphs {
+    max-height: 65vh;
+    overflow-y: scroll;
+}
