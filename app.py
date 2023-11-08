@@ -10,7 +10,7 @@ from tqdm import tqdm
 flight_data, airport_data = data_loader.load_data()
 airport_data.index = airport_data['IATA Code']
 
-flight_data = flight_data.sample(n=300000).reset_index(drop=True)
+# flight_data = flight_data.sample(n=300000).reset_index(drop=True)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
