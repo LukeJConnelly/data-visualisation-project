@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 # import data_loader
 
@@ -40,12 +41,6 @@ def map_column(df, column_name, mapping_dict, is_list=False):
         df[column_name] = df[column_name].map(mapping_dict)
     return df
 
-def min_max_scaling(column):
-    '''
-    Min-Max scales a column
-    (used in clean_co2 function)
-    '''
-    return (column - column.min()) / (column.max() - column.min())
 
 def clean_co2(data):
     '''
@@ -55,19 +50,16 @@ def clean_co2(data):
     - re-calculates the co2_percentage column
     (necessary because documentation for the data was lacking)
     '''
-    # scaling the co2_emissions collumn
-    data["co2_emissions"] = min_max_scaling(data["co2_emissions"])
+    # scaling the co2_emissions column
+    scaler = MinMaxScaler()
+    data['co2_emissions'] = scaler.fit_transform(data[['co2_emissions']])
 
     # calculating and inserting avg c02 emissions for each route
     groups = data.groupby(["from_airport_code", "dest_airport_code"])["co2_emissions"].mean()
-    data['avg_co2_emission_for_this_route'] = data['avg_co2_emission_for_this_route'].astype(float) # ! FOR DEBUG 
-    for index, row in data.iterrows():
-        data.at[index, "avg_co2_emission_for_this_route"] = groups[row["from_airport_code"]][row["dest_airport_code"]]
-    
-    # calculating and incerting difference between a flight and its' average co2 emissons
-    for index, row in data.iterrows():
-        data.at[index, "co2_percentage"] = ((row["avg_co2_emission_for_this_route"] - row["co2_emissions"])/row["avg_co2_emission_for_this_route"])
-    
+    data['avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
+
+    # calculating and inserting difference between a flight and its' average co2 emissons
+    data['co2_percentage'] = ((data['avg_co2_route'] - data['co2_emissions'])/data['avg_co2_route'])
     return data
 
 #######################################################
@@ -101,8 +93,8 @@ def convert_flight_df(flight_df):
     flight_df['scan_date'] = pd.to_datetime(flight_df['scan_date'], format='%Y-%m-%d %H:%M:%S')
     flight_df['duration'] = pd.to_timedelta(flight_df['duration'], unit='m')
     
-    # Miscellaneous mapping
-    flight_df = map_column(split_and_clean_column(flight_df, 'aircraft_type'), 'aircraft_type', {'Airbus A318': 'Example Mapping'}, is_list=True)
+    # Miscellaneous mapping ({} represents mapping dict)
+    flight_df = map_column(split_and_clean_column(flight_df, 'aircraft_type'), 'aircraft_type', {}, is_list=True)
     flight_df = map_column(split_and_clean_column(flight_df, 'airline_name', remove_head=1, remove_tail=1), 'airline_name', {}, is_list=True)
     flight_df = split_and_clean_column(flight_df, 'flight_number')
 
@@ -188,6 +180,7 @@ def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","dest_ai
     if (len(wanted_cols) > 0):
         flight_df = flight_df[wanted_cols]
     
+    flight_df = clean_co2(flight_df)
     return flight_df
 
 
@@ -199,10 +192,9 @@ def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "L
 
     airport_df = add_manual_airport_data(airport_df)
 
-    # Get only relewant airports 
+    # Get only relevant airports 
     airport_list = all_airports_list(flight_df)
     airport_df = airport_df[airport_df['IATA Code'].isin(airport_list)]
-    # flight_df = clean_co2(flight_df) very slow at the moment #! TODO FIX 
     
     return airport_df
 

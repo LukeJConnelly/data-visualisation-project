@@ -1,18 +1,18 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 from dash import Dash, html, dcc, callback, Output, Input
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
+from torch import layout
 from utils import data_loader
 import dash_bootstrap_components as dbc
+from tqdm import tqdm
 
-df = pd.read_csv('data/flights.csv')
+flight_data, airport_data = data_loader.load_data()
+airport_data.index = airport_data['IATA Code']
+
+flight_data = flight_data.sample(n=500).reset_index(drop=True)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-airport_data = pd.DataFrame({'lat': [0, 50], 'lon': [0, 50]}, index=['ETC', 'DUH'])
-flight_data = pd.DataFrame({'src': ['ETC'], 'dest': ['DUH']}, index=['3X4MPL3'])
 
 def get_timepicker():
     return html.Div('Time picker here')
@@ -20,27 +20,33 @@ def get_timepicker():
 def get_map():
     fig = go.Figure()
     # AIRPORTS
-    fig.add_trace(go.Scattermapbox(lat=airport_data['lat'],
-                                   lon=airport_data['lon'],
+    fig.add_trace(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
+                                   lon=airport_data['Longitude Decimal Degrees'],
                                    mode='markers',
                                    marker=go.scattermapbox.Marker(size=5, color='black'),
+                                   name='Airports',
                                    text=airport_data.index))
     # FLIGHTS
-    for i in range(len(flight_data)):
-        # lookup needs cleaning
-        fig.add_trace(
-                    go.Scattermapbox(
-                        mode='lines',
-                        lat=[airport_data.loc[flight_data.iloc[i]['src'], 'lat'], airport_data.loc[flight_data.iloc[i]['dest'], 'lat']],
-                        lon=[airport_data.loc[flight_data.iloc[i]['src'], 'lon'], airport_data.loc[flight_data.iloc[i]['dest'], 'lon']],
-                        line=go.scattermapbox.Line(
-                            width=1,
-                            color="red"
-                        ),
-                        name=str(flight_data.index[i])
+    prev_errors = set()
+    # https://stackoverflow.com/questions/74816407/plotly-graph-object-laggy-when-plotting-many-additional-add-trace
+    for i in tqdm(range(len(flight_data))):
+        try:
+            fig.add_trace(
+                        go.Scattermapbox(
+                            mode='lines',
+                            lat=[airport_data.loc[flight_data.iloc[i]['from_airport_code'], 'Latitude Decimal Degrees'], airport_data.loc[flight_data.iloc[i]['dest_airport_code'], 'Latitude Decimal Degrees']],
+                            lon=[airport_data.loc[flight_data.iloc[i]['from_airport_code'], 'Longitude Decimal Degrees'], airport_data.loc[flight_data.iloc[i]['dest_airport_code'], 'Longitude Decimal Degrees']],
+                            line=go.scattermapbox.Line(
+                                width=1,
+                                color="red"
+                            ),
+                            name=str(flight_data['flight_number'][i])
+                        )
                     )
-                )
-    fig.update_layout(mapbox_style='open-street-map', margin={'r': 0, 't': 0, 'l': 0, 'b': 0,})
+        except KeyError as e:
+            prev_errors.add(e.args[0])
+    print("Following lookup errors occurred:", prev_errors)
+    fig.update_layout(mapbox_style='open-street-map', margin={'r': 0, 't': 0, 'l': 0, 'b': 0,}, showlegend=False)
     return dcc.Graph(id='map', figure=fig)
 
 

@@ -27,10 +27,11 @@ def load_data(raw_flights_file_path= "data/flights.csv", raw_airport_file_path="
     if clean_airport_df_exist:
         clean_airport_df = pd.read_csv("data/clean_airport.csv")
 
-    if (clean_flight_df_exist and clean_airport_df_exist):
+    if clean_flight_df_exist and clean_airport_df_exist:
         return clean_flight_df, clean_airport_df
     
     ### IF CLEAN DATA IS NOT FOUND 
+    
     assert os.path.exists(raw_flights_file_path), f"{raw_flights_file_path} not found! Make sure to run from root folder!"
     assert os.path.exists(raw_airport_file_path), f"{raw_airport_file_path} not found! Make sure to run from root folder!"
 
