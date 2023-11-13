@@ -21,7 +21,8 @@ def get_time_picker(date_options, time_options):
                     value=default_value,
                     className="mb-2",
                 ),
-            ]
+            ],
+            className="p-3"
         )
 
     return html.Div([
@@ -35,6 +36,7 @@ def get_time_picker(date_options, time_options):
                     create_datetime_dropdowns(date_options, time_options, "2023-01-01", is_start=True),
                     create_datetime_dropdowns(date_options, time_options, "2023-01-02"),
                 ]),
+                html.Div(id='warning-message', style={'color': 'red'}),
                 dbc.ModalFooter(
                     dbc.Button("Confirm", id="confirm-selection-btn", className="ms-auto", n_clicks=0)
                 ),
