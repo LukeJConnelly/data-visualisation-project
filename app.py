@@ -1,10 +1,13 @@
+import sys
+#sys.path.insert(1, '/mnt/c/Users/aaa/Documents/AU/9/DataVisualization/data-visualisation-project/utils')
+
 from dash import Dash, html
 from dash.dependencies import Input, Output, State
 from components.map import get_map
-from components.side_bar import get_sidebar
 from components.time_picker import get_default_time_values, get_time_picker
-from utils import data_loader
+import utils.data_loader as data_loader
 import dash_bootstrap_components as dbc
+import plotly.express as px
 
 flight_data, airport_data = data_loader.load_data()
 airport_data.index = airport_data['IATA Code']
@@ -15,6 +18,39 @@ time_options = [{'label': 'Time 1', 'value': '00:00'},
         {'label': 'Time 2', 'value': '01:00'}]
 
 # flight_data = flight_data.sample(n=300000).reset_index(drop=True)
+
+# Sidebar function
+def get_sidebar(flight_data, airport_data):
+    return html.Div(id='sidebar-contents', children=[
+        html.H3('Stats & Filter'),
+        html.Div(
+            id='sidebar-graphs',
+            children=[
+                html.H6('From country'),
+                dcc.Dropdown(id='slct-from-country', options=[]),
+                #dcc.Checklist(id='slct-all-from-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
+                html.H6('To country'),
+                dcc.Dropdown(id='to_country'),
+                #dcc.Checklist(id='slct-all-to-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
+                html.H6('From city'),
+                dcc.Dropdown(id='from_town',
+                            options = flight_data['from_airport_code'].unique()),
+                dcc.Checklist(id='slct-all-from-town',
+                            options=[{'label': 'Select All', 'value': 1}]),
+                html.H6('To city'),
+                dcc.Dropdown(id='to_town',
+                            options = flight_data['dest_airport_code'].unique()),
+                dcc.Checklist(id='slct-all-to-town',
+                            options=[{'label': 'Select All', 'value': 1}]),
+                html.H6('Example Graph 1'),
+                dcc.Graph(id='example-graph-1'),
+                html.H6('Example Graph 2'),
+                dcc.Graph(id='example-graph-2')
+            ]
+        ),
+    ])
+
+#The APP!!!!!! (*o*)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -27,7 +63,7 @@ app.layout = html.Div([
                 get_time_picker(date_options, time_options), get_map(flight_data, airport_data)
             ])
         ], width=9),
-        dbc.Col(id='sidebar', children=[get_sidebar()], width=3)
+        dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data)], width=3)
     ], className='p-5')
 ])
 
