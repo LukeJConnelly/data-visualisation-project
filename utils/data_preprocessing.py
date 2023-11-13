@@ -165,10 +165,33 @@ def add_manual_airport_data(airport_df):
         "NBO": {
             "Latitude Decimal Degrees": -1.333,
             "Longitude Decimal Degrees": 36.927
+        },
+        "ICN": {
+            "Latitude Decimal Degrees": 37.469,
+            "Longitude Decimal Degrees": 126.450
+        },
+        "ATH": {
+            "Latitude Decimal Degrees": 37.936401,
+            "Longitude Decimal Degrees": 23.9445
+        },
+        "PVG": {
+            "Latitude Decimal Degrees": 31.143,
+            "Longitude Decimal Degrees": 121.805
+        },
+        "SAW": {
+            "Latitude Decimal Degrees": 40.898,
+            "Longitude Decimal Degrees": 29.309
+        },
+        "DME": {
+            "Latitude Decimal Degrees": 55.408,
+            "Longitude Decimal Degrees": 37.906
         }
     }
 
     for airport, missing_data in missing_data.items():
+        if not (airport in airport_df['IATA Code'].values):
+            new_row = pd.DataFrame([{"IATA Code": airport, **missing_data}])
+            airport_df = pd.concat([airport_df, new_row], ignore_index=True)
         index = airport_df[airport_df['IATA Code'] == airport].index[0]
 
         for name, val in missing_data.items():
