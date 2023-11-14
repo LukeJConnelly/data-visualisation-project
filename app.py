@@ -14,7 +14,8 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 
-flight_data, airport_data = data_loader.load_data()
+ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA = data_loader.load_data()
+flight_data, airport_data = ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
 airport_data.index = airport_data['IATA Code']
 
 unique_dates = pd.to_datetime(flight_data['departure_time']).dt.date.dropna().unique()
@@ -140,7 +141,7 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
     print(flight_data.shape)
 
     if (len(iata_codes) < 1):
-        flight_data, _ = data_loader.load_data()
+        flight_data = ORIGINAL_FLIGHT_DATA
     else:
         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
