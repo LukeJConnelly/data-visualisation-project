@@ -137,16 +137,12 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
     global flight_data
     if selectedData != None:
         iata_codes = [data_point["text"] for data_point in selectedData["points"]]
-    print("airports:", iata_codes)
-    print(flight_data.shape)
 
     if (len(iata_codes) < 1):
         flight_data = ORIGINAL_FLIGHT_DATA
     else:
         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
-    print(flight_data.shape)
-
     if(n_clicks > 0):
         flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
         start_date = pd.to_datetime(f'{start_date} {start_time}').date()
