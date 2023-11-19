@@ -3,12 +3,11 @@ import plotly.graph_objects as go
 from tqdm import tqdm
 
 def get_map(flight_data, airport_data):
-    fig = go.Figure(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
-                                   lon=airport_data['Longitude Decimal Degrees'],
-                                   mode='markers',
-                                   marker=go.scattermapbox.Marker(size=5, color='black'),
-                                   name='Airports',
-                                   text=airport_data.index))
+    hover_texts_airports = [f"{country}" for country in airport_data['IATA Code']]
+    print(len(hover_texts_airports))
+  
+    fig = go.Figure()
+    
     # FLIGHTS
     prev_errors = set()
 
@@ -35,16 +34,28 @@ def get_map(flight_data, airport_data):
 
     print(f"There are {len(lats)} flights being plotted")
 
+    hover_texts = [f"{name} - Lat: {lat}, Lon: {lon}" for name, lat, lon in zip(airport_data.index, airport_data['Latitude Decimal Degrees'], airport_data['Longitude Decimal Degrees'])]
+
+
+
     fig.add_trace(go.Scattermapbox(
         mode="lines",
         lat=lats,
         lon=lons,
         line=dict(width=1, color="red"),
         name="Flights",
-        # Needs debugging, and/or width
-        text=["Count: " +str(count) for count in counts],
-        opacity=0.1
+        text=hover_texts,
+        hoverinfo='text',
+        opacity=0.1,
     ))
+
+    fig.add_trace(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
+                                lon=airport_data['Longitude Decimal Degrees'],
+                                mode='markers',
+                                marker=go.scattermapbox.Marker(size=5, color='black'),
+                                name='Airports',
+                                text=hover_texts_airports,
+                                hoverinfo='text'))
 
     # Option 2: Loop through and plot each flight individually
     

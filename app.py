@@ -132,11 +132,11 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
 
 @app.callback(
     Output("help-modal", "is_open"),
-    [Input("open-help-modal", "n_clicks"), Input("close-help-modal", "n_clicks")],
+    [Input("open-help-modal", "n_clicks")],
     [State("help-modal", "is_open")],
 )
-def toggle_modal(n1, n2, is_open):
-    if n1 or n2:
+def toggle_modal(n, is_open):
+    if n:
         return not is_open
     return is_open
 

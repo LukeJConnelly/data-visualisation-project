@@ -6,27 +6,26 @@ def get_help_modal():
     dbc.Button("Help", id="open-help-modal", className="mb-3"),
     dbc.Modal(
         [
-            dbc.ModalHeader("Help Information"),
+            dbc.ModalHeader(html.H3("Help Information")),
             dbc.ModalBody(
     children=[
         html.P([
-            html.B("Welcome to the Flight Path Dashboard!"),
             " This tool provides an interactive way to explore and analyze flight data."
         ]),
         html.P([
             html.B("Key Features:"),
             html.Ul([
-                html.Li("Interactive Map: "),
+                html.Li(html.B("Interactive Map: ")),
                 html.Span("Zoom in and out for a detailed view of flight paths."),
-                html.Li("Flight Path Visualization: "),
+                html.Li(html.B("Flight Path Visualization: ")),
                 html.Span("Select airports from the dropdown menu to view corresponding flight paths."),
-                html.Li("Detailed Flight Information: "),
+                html.Li(html.B("Detailed Flight Information: ")),
                 html.Span("Hover over any flight path to see detailed information such as airline, duration, and more."),
-                html.Li("Time Filtering: "),
+                html.Li(html.B("Time Filtering: ")),
                 html.Span("Use the date and time selectors to filter flights based on specific departure and arrival times."),
-                html.Li("Data Insights: "),
+                html.Li(html.B("Data Insights: ")),
                 html.Span("Gain insights into flight frequencies, popular routes, and airline operations."),
-                html.Li("Variable-Based Flight Path Visualization:"),
+                html.Li(html.B("Variable-Based Flight Path Visualization:")),
                 html.Span("Select a variable to color code the flight paths based on that variable."),
             ])
         ]),
@@ -36,9 +35,6 @@ def get_help_modal():
         ]),
     ]
 ),
-            dbc.ModalFooter(
-                dbc.Button("Close", id="close-help-modal", className="ml-auto")
-            ),
         ],
         id="help-modal",
     ),
