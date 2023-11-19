@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 def get_map(flight_data, airport_data):
     fig = go.Figure(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
-                                   lo=airport_data['Longitude Decimal Degrees'],
+                                   lon=airport_data['Longitude Decimal Degrees'],
                                    mode='markers',
                                    marker=go.scattermapbox.Marker(size=5, color='black'),
                                    name='Airports',
