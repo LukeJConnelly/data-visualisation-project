@@ -3,9 +3,7 @@ import plotly.graph_objects as go
 from tqdm import tqdm
 
 def get_map(flight_data, airport_data):
-    fig = go.Figure()
-    # AIRPORTS
-    fig.add_trace(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
+    fig = go.Figure(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
                                    lon=airport_data['Longitude Decimal Degrees'],
                                    mode='markers',
                                    marker=go.scattermapbox.Marker(size=5, color='black'),

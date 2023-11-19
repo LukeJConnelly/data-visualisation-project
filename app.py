@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from dash import Dash, html
 from dash import dcc
 from dash.dependencies import Input, Output, State
+from components.side_bar import get_sidebar
 from components.help import get_help_modal
 import pytz
 from components.map import get_map
@@ -36,41 +37,9 @@ def generate_time_options(interval_minutes=30):
 
     return time_options
 
-# Generate time options
 time_options = generate_time_options(30)
 
 # flight_data = flight_data.sample(n=300000).reset_index(drop=True)
-
-# Sidebar function
-def get_sidebar(flight_data, airport_data):
-    return html.Div(id='sidebar-contents', children=[
-        html.H3('Stats & Filter'),
-        html.Div(
-            id='sidebar-graphs',
-            children=[
-                html.H6('From country'),
-                dcc.Dropdown(id='slct-from-country', options=[]),
-                #dcc.Checklist(id='slct-all-from-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
-                html.H6('To country'),
-                dcc.Dropdown(id='to_country'),
-                #dcc.Checklist(id='slct-all-to-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
-                html.H6('From city'),
-                dcc.Dropdown(id='from_town',
-                            options = flight_data['from_airport_code'].unique()),
-                dcc.Checklist(id='slct-all-from-town',
-                            options=[{'label': 'Select All', 'value': 1}]),
-                html.H6('To city'),
-                dcc.Dropdown(id='to_town',
-                            options = flight_data['dest_airport_code'].unique()),
-                dcc.Checklist(id='slct-all-to-town',
-                            options=[{'label': 'Select All', 'value': 1}]),
-                html.H6('Example Graph 1'),
-                dcc.Graph(id='example-graph-1'),
-                html.H6('Example Graph 2'),
-                dcc.Graph(id='example-graph-2')
-            ]
-        ),
-    ])
 
 #The APP!!!!!! (*o*)
 

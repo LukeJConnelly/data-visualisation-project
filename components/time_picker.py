@@ -26,9 +26,11 @@ def get_time_picker(date_options, time_options):
         )
 
     return html.Div([
-        html.Div(id='current-datetime', children="Select a time range"),
+        dbc.Row([
+            dbc.Col(html.Div(id='current-datetime', children="Select a time range"), width=9),
+            dbc.Col(dbc.Button("Change", id="open-modal-btn", n_clicks=0, className="mb-3"), width=3),
+        ], justify="center"),
 
-        html.Button("Change", id="open-modal-btn", n_clicks=0),
         dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Select Date and Time")),
