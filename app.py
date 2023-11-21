@@ -75,6 +75,7 @@ def toggle_time_modal(n1, n2, is_open):
     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
      State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
+
 def update_datetime(n_clicks, start_date, start_time, end_date, end_time):
     if not n_clicks:
         start_date, start_time, end_date, end_time = get_default_time_values(date_options, time_options)
@@ -107,11 +108,16 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
     if selectedData != None:
         iata_codes = [data_point["text"] for data_point in selectedData["points"]]
 
-    if (len(iata_codes) < 1):
-        flight_data = ORIGINAL_FLIGHT_DATA
-    else:
+    flight_data = ORIGINAL_FLIGHT_DATA
+        
+    if (len(iata_codes) > 0):
         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
+#    if from_country != None:
+#        flight_data = flight_data[flight_data["from_country"] == from_country]
+#    if from_town != None:
+#        flight_data = flight_data[flight_data["from_airport_code"] == from_town]
+
     if(n_clicks > 0):
         flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
         start_date = pd.to_datetime(f'{start_date} {start_time}').date()
