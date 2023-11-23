@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
+
 # import data_loader
 
 #######################################################
@@ -97,7 +98,7 @@ def convert_flight_df(flight_df):
     flight_df = map_column(split_and_clean_column(flight_df, 'aircraft_type'), 'aircraft_type', {}, is_list=True)
     flight_df = map_column(split_and_clean_column(flight_df, 'airline_name', remove_head=1, remove_tail=1), 'airline_name', {}, is_list=True)
     flight_df = split_and_clean_column(flight_df, 'flight_number')
-
+    
     return flight_df
 
 def convert_airport_df(airport_df):

@@ -1,6 +1,12 @@
 from dash import html, dcc
+import plotly.express as px
+
+from utils import data_filtering
 
 def get_sidebar(flight_data, airport_data):
+    # ? is this just initial? i.e. will this overwrite callbacks or vise verse? 
+    aircraft_type_count = data_filtering.get_aircraft_type_count(flight_data)
+
     return html.Div(id='sidebar-contents', children=[
         html.H3('Stats & Filter'),
         html.Div(
@@ -22,6 +28,11 @@ def get_sidebar(flight_data, airport_data):
                             options = flight_data['dest_airport_code'].unique()),
                 dcc.Checklist(id='slct-all-to-town',
                             options=[{'label': 'Select All', 'value': 1}]),
+                dcc.Graph(id='airport-bar-chart',
+                          figure=px.bar(airport_data, x='IATA Code', y='flight_degree', title='Flights from/to airport')),
+                dcc.Graph(id='aircraft-bar-chart',
+                          figure=px.bar(aircraft_type_count, x='aircraft_type', y='count', title='Flights from/to airport')),
+                html.Button('Reset Aircraft Selection', id='reset-aircraft-button'),
                 html.H6('Example Graph 1'),
                 dcc.Graph(id='example-graph-1'),
                 html.H6('Example Graph 2'),

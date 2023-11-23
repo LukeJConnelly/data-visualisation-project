@@ -1,5 +1,7 @@
 import pandas as pd
 import os
+import json
+import ast
 
 from utils import data_preprocessing
 # import data_preprocessing
@@ -22,6 +24,10 @@ def load_data(raw_flights_file_path= "data/flights.csv", raw_airport_file_path="
     # get clean flight data
     if clean_flight_df_exist:
         clean_flight_df = pd.read_csv("data/clean_flights.csv")
+        # convert lists to list after load as string
+        for col_with_list in ["aircraft_type", "airline_name", "flight_number"]:
+            # clean_flight_df[col_with_list] = clean_flight_df[col_with_list].apply(json.loads)
+            clean_flight_df[col_with_list] = clean_flight_df[col_with_list].apply(ast.literal_eval)
 
     # get clean airport data
     if clean_airport_df_exist:
@@ -47,7 +53,7 @@ def load_data(raw_flights_file_path= "data/flights.csv", raw_airport_file_path="
     clean_airport_df = data_preprocessing.cleaning_func_airport_df(airport_df, flight_df)
 
     # add degree to airport
-    airport_df = data_preprocessing.add_airport_degree(airport_df, flight_df)
+    clean_airport_df = data_preprocessing.add_airport_degree(clean_airport_df, clean_flight_df)
 
     # save clean data types
     clean_flight_df.to_csv("data/clean_flights.csv", index=False)

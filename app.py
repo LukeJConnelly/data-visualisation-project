@@ -3,21 +3,27 @@ import sys
 
 from datetime import datetime, timedelta
 from dash import Dash, html
-from dash import dcc
+from dash import dcc, callback_context
 from dash.dependencies import Input, Output, State
 from components.side_bar import get_sidebar
 from components.help import get_help_modal
 import pytz
 from components.map import get_map
 from components.time_picker import get_default_time_values, get_time_picker
-import utils.data_loader as data_loader
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 
+import utils.data_loader as data_loader
+from utils import data_filtering
+
 ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA = data_loader.load_data()
 flight_data, airport_data = ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
 airport_data.index = airport_data['IATA Code']
+
+ORIGINAL_AIRCRAFT_TYPE_COUNT = data_filtering.get_aircraft_type_count(flight_data)
+aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
+FILTER_AIRCRAFT_TYPE = False
 
 unique_dates = pd.to_datetime(flight_data['departure_time']).dt.date.dropna().unique()
 unique_dates = sorted(unique_dates)  # Convert to set for uniqueness, then sort
@@ -98,20 +104,42 @@ def validate_datetime(start_date, start_time, end_date, end_time):
 
 @app.callback(
     Output('flight-map', 'figure'),
-    [Input('confirm-selection-btn', 'n_clicks'), Input("flight-map", "selectedData")],
-    [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
+    [Input('confirm-selection-btn', 'n_clicks'),
+     Input("flight-map", "selectedData"),
+     Input('aircraft-bar-chart', 'clickData'),
+     Input("reset-aircraft-button", "n_clicks"),
+     ],
+    [
+     State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
      State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
-def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_time):
+def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button, start_date, start_time, end_date, end_time):
+    global flight_data, FILTER_AIRCRAFT_TYPE
+
     iata_codes = []
-    global flight_data
-    if selectedData != None:
+    ctx = callback_context
+    
+    # map select
+    if selectedData is not None:
         iata_codes = [data_point["text"] for data_point in selectedData["points"]]
 
-    flight_data = ORIGINAL_FLIGHT_DATA
+    if (ctx.triggered_id != "flight-map" or selectedData is None):
+        # if triggered by brushing over map, keep previous brushing
+        # but still empty brushing for reset
+        flight_data = ORIGINAL_FLIGHT_DATA
         
     if (len(iata_codes) > 0):
         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
+    
+    # make reset permanent until new choice
+    if (callback_context.triggered_id == "reset-aircraft-button"):
+        FILTER_AIRCRAFT_TYPE = False
+    if (callback_context.triggered_id == "aircraft-bar-chart"):
+        FILTER_AIRCRAFT_TYPE = True
+    if ((selected_aircraft is not None) and (FILTER_AIRCRAFT_TYPE)):
+        # dont apply aircraft filter if aircraft selection is reset or nothing is selected
+        aircraft_type = selected_aircraft["points"][0]["x"]
+        flight_data = data_filtering.get_flights_with_aircraft_type(flight_data, aircraft_type)
     
 #    if from_country != None:
 #        flight_data = flight_data[flight_data["from_country"] == from_country]
@@ -135,6 +163,30 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
         return updated_figure
     
     return get_map(flight_data, airport_data).figure
+
+# Callback to capture clicked data
+@app.callback(
+    Output('aircraft-bar-chart', 'figure'),
+    [Input('aircraft-bar-chart', 'clickData'),
+     Input("reset-aircraft-button", "n_clicks"),
+     ]
+)
+def display_clicked_data(clickData, n_clicks):
+    global aircraft_type_count, flight_data
+
+    ctx = callback_context
+
+    if (ctx.triggered_id == "reset-aircraft-button"):
+        aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
+        flight_data = ORIGINAL_FLIGHT_DATA
+    elif clickData is not None:
+        aircraft_type = clickData["points"][0]["x"]
+        aircraft_type_count = aircraft_type_count.query(f'aircraft_type == "{aircraft_type}"')
+        flight_data = data_filtering.get_flights_with_aircraft_type(flight_data, aircraft_type)
+
+    aircraft_type_bar = px.bar(aircraft_type_count, x='aircraft_type', y='count', title='Flights from/to airport')
+    return aircraft_type_bar
+
 
 @app.callback(
     Output("help-modal", "is_open"),
