@@ -108,7 +108,7 @@ def validate_datetime(start_date, start_time, end_date, end_time):
     [Input('confirm-selection-btn', 'n_clicks')],
     Input("flight-map", "selectedData"),
     Input('aircraft-bar-chart', 'clickData'),
-    Input("reset-aircraft-button", "n_clicks")
+    Input("reset-aircraft-button", "n_clicks"),
     Input('from_country', 'value'),
     Input('dest_country', 'value'),
     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
