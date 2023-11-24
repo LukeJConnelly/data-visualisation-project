@@ -7,6 +7,7 @@ from dash import dcc
 from dash.dependencies import Input, Output, State
 from components.side_bar import get_sidebar
 from components.help import get_help_modal
+from components.country_airport_dicts import dest_country_airport_dict, from_country_airport_dict
 import pytz
 from components.map import get_map
 from components.time_picker import get_default_time_values, get_time_picker
@@ -54,7 +55,7 @@ app.layout = html.Div([
                 get_time_picker(date_options, time_options), get_help_modal(), get_map(flight_data, airport_data)
             ])
         ], width=9),
-        dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data)], width=3)
+        dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data, from_country_airport_dict, dest_country_airport_dict)], width=3)
     ], className='p-5')
 ])
 
@@ -98,11 +99,14 @@ def validate_datetime(start_date, start_time, end_date, end_time):
 
 @app.callback(
     Output('flight-map', 'figure'),
-    [Input('confirm-selection-btn', 'n_clicks'), Input("flight-map", "selectedData")],
+    [Input('confirm-selection-btn', 'n_clicks')],
+    Input("flight-map", "selectedData"),
+    Input('from_country', 'value'),
+    Input('dest_country', 'value'),
     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
-     State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
+    State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
-def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_time):
+def update_map(n_clicks, selectedData, from_country, dest_country, start_date, start_time, end_date, end_time):
     iata_codes = []
     global flight_data
     if selectedData != None:
@@ -113,10 +117,14 @@ def update_map(n_clicks, selectedData, start_date, start_time, end_date, end_tim
     if (len(iata_codes) > 0):
         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
-#    if from_country != None:
-#        flight_data = flight_data[flight_data["from_country"] == from_country]
-#    if from_town != None:
-#        flight_data = flight_data[flight_data["from_airport_code"] == from_town]
+    if from_country != None and from_country != []:
+        flight_data = flight_data.loc[flight_data['from_country'].isin(from_country)]
+    # if from_airport_code != None and from_airport_code != []:
+    #     flight_data = flight_data.loc[flight_data['from_airport_code'].isin(from_airport_code)]
+    if dest_country != None and dest_country != []:
+        flight_data = flight_data.loc[flight_data['dest_country'].isin(dest_country)]
+    # if dest_airport_code != None and dest_airport_code != []:
+    #     flight_data = flight_data.loc[flight_data['dest_airport_code'].isin(dest_airport_code)]
 
     if(n_clicks > 0):
         flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
