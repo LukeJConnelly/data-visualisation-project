@@ -1,9 +1,9 @@
 from dash import Dash, html
 import dash_bootstrap_components as dbc
 
-def get_help_modal():
+def get_about_modal():
     return html.Div([
-    dbc.Button("Help", id="open-help-modal", className="mb-3"),
+    dbc.Button("About", id="open-help-modal", className="mb-3 btn-secondary"),
     dbc.Modal(
         [
             dbc.ModalHeader(html.H3("Help Information")),

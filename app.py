@@ -6,11 +6,13 @@ from dash import Dash, html
 from dash import dcc, callback_context
 from dash.dependencies import Input, Output, State
 from components.side_bar import get_sidebar
-from components.help import get_help_modal
+from components.line_chart import get_line_chart, create_figure
+from components.about import get_about_modal
 from components.country_airport_dicts import dest_country_airport_dict, from_country_airport_dict
 import pytz
 from components.map import get_map
-from components.time_picker import get_default_time_values, get_time_picker
+from components.time_picker import get_time_picker
+from utils.time import get_date_time_options
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
@@ -26,42 +28,21 @@ ORIGINAL_AIRCRAFT_TYPE_COUNT = data_filtering.get_aircraft_type_count(flight_dat
 aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
 FILTER_AIRCRAFT_TYPE = False
 
-unique_dates = pd.to_datetime(flight_data['departure_time']).dt.date.dropna().unique()
-unique_dates = sorted(unique_dates)  # Convert to set for uniqueness, then sort
-
-date_options = [{'label': pd.to_datetime(date).strftime('%Y-%m-%d'), 'value': date} for date in unique_dates]
-
-def generate_time_options(interval_minutes=30):
-    start_time = datetime(2000, 1, 1, 0, 0)
-    end_time = datetime(2000, 1, 2, 0, 0)
-
-    time_options = []
-    current_time = start_time
-    while current_time < end_time:
-        time_str = current_time.strftime('%H:%M')
-        time_options.append({'label': time_str, 'value': time_str})
-        current_time += timedelta(minutes=interval_minutes)
-
-    return time_options
-
-time_options = generate_time_options(30)
-
-# flight_data = flight_data.sample(n=300000).reset_index(drop=True)
-
-#The APP!!!!!! (*o*)
+flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
+date_options, time_options = get_date_time_options(flight_data['departure_time'])
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
 
 app.layout = html.Div([
     dbc.NavbarSimple(brand='FlightVis', brand_href='#', color='dark', dark=True),
     dbc.Row(id='container', children=[
         dbc.Col(id='main', children=[
             html.Div(id='main-contents', children=[
-                get_time_picker(date_options, time_options), get_help_modal(), get_map(flight_data, airport_data)
+                get_time_picker(date_options, time_options), get_map(flight_data, airport_data), get_about_modal(),
+                get_line_chart(flight_data)
             ])
         ], width=9),
-        dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data, from_country_airport_dict, dest_country_airport_dict)], width=3)
+        # dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data, from_country_airport_dict, dest_country_airport_dict)], width=3)
     ], className='p-5')
 ])
 
@@ -82,12 +63,16 @@ def toggle_time_modal(n1, n2, is_open):
     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
      State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
-
 def update_datetime(n_clicks, start_date, start_time, end_date, end_time):
     if not n_clicks:
-        start_date, start_time, end_date, end_time = get_default_time_values(date_options, time_options)
+        start_date, start_time, end_date, end_time = date_options[0]['value'], time_options[0]['value'], date_options[-1]['value'], time_options[-1]['value']
     
-    return f"Start Time: {start_date} {start_time}, End Time: {end_date} {end_time}"
+    return html.Div([
+        html.Span("Start Time: ", style={'font-weight': 'bold'}),
+        html.Span(f"{start_date} {start_time}, "),
+        html.Span("End Time: ", style={'font-weight': 'bold'}),
+        html.Span(f"{end_date} {end_time}")
+    ])
 
 @app.callback(
     [Output('warning-message', 'children'), 
@@ -106,69 +91,90 @@ def validate_datetime(start_date, start_time, end_date, end_time):
 @app.callback(
     Output('flight-map', 'figure'),
     [Input('confirm-selection-btn', 'n_clicks')],
-    Input("flight-map", "selectedData"),
-    Input('aircraft-bar-chart', 'clickData'),
-    Input("reset-aircraft-button", "n_clicks"),
-    Input('from_country', 'value'),
-    Input('dest_country', 'value'),
     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
     State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
-def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, start_date, start_time, end_date, end_time):
+def update_map(n_clicks, start_date, start_time, end_date, end_time):
+        # Convert start and end dates to datetime objects
+    start_datetime = pd.to_datetime(f'{start_date} {start_time}')
+    end_datetime = pd.to_datetime(f'{end_date} {end_time}')
 
-    global flight_data, FILTER_AIRCRAFT_TYPE
+    # Filter by date and time range
+    filtered_data = flight_data[
+        (flight_data['departure_time'] >= start_datetime) & 
+        (flight_data['departure_time'] <= end_datetime)
+    ]
 
-    iata_codes = []
-    ctx = callback_context
+    return get_map(filtered_data, airport_data).figure 
+
+# @app.callback(
+#     Output('flight-map', 'figure'),
+#     [Input('confirm-selection-btn', 'n_clicks')],
+#     Input("flight-map", "selectedData"),
+#     Input('aircraft-bar-chart', 'clickData'),
+#     Input("reset-aircraft-button", "n_clicks"),
+#     Input('from_country', 'value'),
+#     Input('dest_country', 'value'),
+#     [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
+#     State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
+# )
+# def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, start_date, start_time, end_date, end_time):
+
+#     global flight_data, FILTER_AIRCRAFT_TYPE
+
+#     iata_codes = []
+#     ctx = callback_context
     
-    # map select
-    if selectedData is not None:
-        iata_codes = [data_point["text"] for data_point in selectedData["points"]]
+#     # map select
+#     if selectedData is not None:
+#         iata_codes = [data_point["text"] for data_point in selectedData["points"]]
 
-    if (ctx.triggered_id != "flight-map" or selectedData is None):
-        # if triggered by brushing over map, keep previous brushing
-        # but still empty brushing for reset
-        flight_data = ORIGINAL_FLIGHT_DATA
+#     if (ctx.triggered_id != "flight-map" or selectedData is None):
+#         # if triggered by brushing over map, keep previous brushing
+#         # but still empty brushing for reset
+#         flight_data = ORIGINAL_FLIGHT_DATA
         
-    if (len(iata_codes) > 0):
-        flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
+#     if (len(iata_codes) > 0):
+#         flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
-    # make reset permanent until new choice
-    if (callback_context.triggered_id == "reset-aircraft-button"):
-        FILTER_AIRCRAFT_TYPE = False
-    if (callback_context.triggered_id == "aircraft-bar-chart"):
-        FILTER_AIRCRAFT_TYPE = True
-    if ((selected_aircraft is not None) and (FILTER_AIRCRAFT_TYPE)):
-        # dont apply aircraft filter if aircraft selection is reset or nothing is selected
-        aircraft_type = selected_aircraft["points"][0]["x"]
-        flight_data = data_filtering.get_flights_with_aircraft_type(flight_data, aircraft_type)
+#     # make reset permanent until new choice
+#     if (callback_context.triggered_id == "reset-aircraft-button"):
+#         FILTER_AIRCRAFT_TYPE = False
+#     if (callback_context.triggered_id == "aircraft-bar-chart"):
+#         FILTER_AIRCRAFT_TYPE = True
+#     if ((selected_aircraft is not None) and (FILTER_AIRCRAFT_TYPE)):
+#         # dont apply aircraft filter if aircraft selection is reset or nothing is selected
+#         aircraft_type = selected_aircraft["points"][0]["x"]
+#         flight_data = data_filtering.get_flights_with_aircraft_type(flight_data, aircraft_type)
 
-    if from_country != None and from_country != []:
-        flight_data = flight_data.loc[flight_data['from_country'].isin(from_country)]
-    # if from_airport_code != None and from_airport_code != []:
-    #     flight_data = flight_data.loc[flight_data['from_airport_code'].isin(from_airport_code)]
-    if dest_country != None and dest_country != []:
-        flight_data = flight_data.loc[flight_data['dest_country'].isin(dest_country)]
-    # if dest_airport_code != None and dest_airport_code != []:
-    #     flight_data = flight_data.loc[flight_data['dest_airport_code'].isin(dest_airport_code)]
+#     if from_country != None and from_country != []:
+#         flight_data = flight_data.loc[flight_data['from_country'].isin(from_country)]
+#     # if from_airport_code != None and from_airport_code != []:
+#     #     flight_data = flight_data.loc[flight_data['from_airport_code'].isin(from_airport_code)]
+#     if dest_country != None and dest_country != []:
+#         flight_data = flight_data.loc[flight_data['dest_country'].isin(dest_country)]
+#     # if dest_airport_code != None and dest_airport_code != []:
+#     #     flight_data = flight_data.loc[flight_data['dest_airport_code'].isin(dest_airport_code)]
 
-    if(n_clicks > 0):
-        flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
-        start_date = pd.to_datetime(f'{start_date} {start_time}').date()
-        end_date = pd.to_datetime(f'{end_date} {end_time}').date()
+#     if(n_clicks > 0):
+#         flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
+#         start_date = pd.to_datetime(f'{start_date} {start_time}').date()
+#         end_date = pd.to_datetime(f'{end_date} {end_time}').date()
 
+#         # Perform the comparison
+#         filtered_data = flight_data[
+#             (flight_data['departure_time'].dt.date >= start_date) & 
+#             (flight_data['departure_time'].dt.date <= end_date) &
+#             (((flight_data['departure_time'].dt.time >= datetime.strptime(start_time, '%H:%M').time()) &
+#             (flight_data['departure_time'].dt.time <= datetime.strptime(end_time, '%H:%M').time()))
+#              if flight_data['departure_time'].dt.date == end_date else True)
+#         ]
 
-        # Perform the comparison
-        filtered_data = flight_data[
-            (flight_data['departure_time'].dt.date >= start_date) & 
-            (flight_data['departure_time'].dt.date <= end_date)
-        ]
+#         updated_figure = get_map(filtered_data, airport_data).figure 
 
-        updated_figure = get_map(filtered_data, airport_data).figure 
-
-        return updated_figure
+#         return updated_figure
     
-    return get_map(flight_data, airport_data).figure
+#     return get_map(flight_data, airport_data).figure
 
 # Callback to capture clicked data
 @app.callback(
@@ -204,6 +210,12 @@ def toggle_modal(n, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output('line-chart', 'figure'),
+    [Input('y-axis-dropdown', 'value')]
+)
+def update_chart(selected_y_column):
+    return create_figure(flight_data, selected_y_column).figure
 
 
 if __name__ == '__main__':

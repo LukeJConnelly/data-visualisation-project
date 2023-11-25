@@ -1,9 +1,11 @@
 from dash import dcc
 import plotly.graph_objects as go
 from tqdm import tqdm
+from components.country_airport_dicts import airport_to_country
 
 def get_map(flight_data, airport_data):
-    hover_texts_airports = [f"{country}" for country in airport_data['IATA Code']]
+
+    hover_texts_airports = [f"{airport} - {airport_to_country[airport]}" for airport in airport_data['IATA Code']]
     print(len(hover_texts_airports))
   
     fig = go.Figure()
@@ -33,6 +35,7 @@ def get_map(flight_data, airport_data):
             prev_errors.add(e.args[0])
 
     print(f"There are {len(lats)} flights being plotted")
+
 
     hover_texts = [f"{name} - Lat: {lat}, Lon: {lon}" for name, lat, lon in zip(airport_data.index, airport_data['Latitude Decimal Degrees'], airport_data['Longitude Decimal Degrees'])]
 
@@ -78,5 +81,5 @@ def get_map(flight_data, airport_data):
 
     
     print("Following lookup errors occurred:", prev_errors)
-    fig.update_layout(mapbox_style='open-street-map', margin={'r': 0, 't': 0, 'l': 0, 'b': 0,})
+    fig.update_layout(mapbox_style='open-street-map',  margin={'r': 20, 't': 20, 'l': 0, 'b': 20})
     return dcc.Graph(id='flight-map', figure=fig)
