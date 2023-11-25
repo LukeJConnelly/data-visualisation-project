@@ -215,7 +215,7 @@ def toggle_modal(n, is_open):
     [Input('y-axis-dropdown', 'value')]
 )
 def update_chart(selected_y_column):
-    return create_figure(flight_data, selected_y_column).figure
+    return create_figure(flight_data, selected_y_column)
 
 
 if __name__ == '__main__':
