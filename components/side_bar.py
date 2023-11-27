@@ -1,33 +1,22 @@
+
 from dash import html, dcc
 import plotly.express as px
 
 from utils import data_filtering
 
-def get_sidebar(flight_data, airport_data):
+def get_sidebar(flight_data, airport_data, from_country_airport_dict, dest_country_airport_dict):
+    print(flight_data.columns)
     # ? is this just initial? i.e. will this overwrite callbacks or vise verse? 
     aircraft_type_count = data_filtering.get_aircraft_type_count(flight_data)
-
     return html.Div(id='sidebar-contents', children=[
         html.H3('Stats & Filter'),
         html.Div(
             id='sidebar-graphs',
             children=[
-                html.H6('From country'),
-                dcc.Dropdown(id='slct-from-country', options=[]),
-                #dcc.Checklist(id='slct-all-from-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
-                html.H6('To country'),
-                dcc.Dropdown(id='to_country'),
-                #dcc.Checklist(id='slct-all-to-country', options=[{'label': 'Select All', 'value': 1}], values=[]),
-                html.H6('From city'),
-                dcc.Dropdown(id='from_town',
-                            options = flight_data['from_airport_code'].unique()),
-                dcc.Checklist(id='slct-all-from-town',
-                            options=[{'label': 'Select All', 'value': 1}]),
-                html.H6('To city'),
-                dcc.Dropdown(id='to_town',
-                            options = flight_data['dest_airport_code'].unique()),
-                dcc.Checklist(id='slct-all-to-town',
-                            options=[{'label': 'Select All', 'value': 1}]),
+                html.H6('Departure Country:'),
+                dcc.Dropdown(id='from_country', options=list(from_country_airport_dict.keys()), multi = True),
+                html.H6('Arrival Country:'),
+                dcc.Dropdown(id='dest_country', options=list(dest_country_airport_dict.keys()), multi = True),
                 dcc.Graph(id='airport-bar-chart',
                           figure=px.bar(airport_data, x='IATA Code', y='flight_degree', title='Flights from/to airport')),
                 dcc.Graph(id='aircraft-bar-chart',

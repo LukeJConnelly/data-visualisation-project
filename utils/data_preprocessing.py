@@ -199,7 +199,7 @@ def add_manual_airport_data(airport_df):
             airport_df.at[index, name] = val
     return airport_df
 
-def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","dest_airport_code","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
         flight_df = flight_df[wanted_cols]
