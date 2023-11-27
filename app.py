@@ -2,7 +2,7 @@ import sys
 #sys.path.insert(1, '/mnt/c/Users/aaa/Documents/AU/9/DataVisualization/data-visualisation-project/utils')
 
 from datetime import datetime, timedelta
-from dash import Dash, html
+from dash import Dash, html, dash_table
 from dash import dcc, callback_context
 from dash.dependencies import Input, Output, State
 from components.side_bar import get_sidebar
@@ -14,12 +14,16 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import pandas as pd
 
+import plotly.graph_objects as go
+
 import utils.data_loader as data_loader
 from utils import data_filtering
 
 ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA = data_loader.load_data()
 flight_data, airport_data = ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
 airport_data.index = airport_data['IATA Code']
+
+flight_data_table = data_filtering.get_unique_flight_routes(flight_data)
 
 ORIGINAL_AIRCRAFT_TYPE_COUNT = data_filtering.get_aircraft_type_count(flight_data)
 aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
@@ -51,14 +55,23 @@ time_options = generate_time_options(30)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-
 app.layout = html.Div([
     dbc.NavbarSimple(brand='FlightVis', brand_href='#', color='dark', dark=True),
     dbc.Row(id='container', children=[
         dbc.Col(id='main', children=[
             html.Div(id='main-contents', children=[
-                get_time_picker(date_options, time_options), get_help_modal(), get_map(flight_data, airport_data)
-            ])
+                get_time_picker(date_options, time_options), get_help_modal(), get_map(flight_data, airport_data),
+                dash_table.DataTable(
+                        id='table',
+                        columns=[{"name": i, "id": i} 
+                                for i in flight_data_table.columns],
+                        data=flight_data_table.to_dict('records'),
+                        # data=[{key: str(value) for key, value in data_point.items()} for data_point in flight_data_table.to_dict('records')],
+                        style_cell=dict(textAlign='left'),
+                        style_header=dict(backgroundColor="paleturquoise"),
+                        style_data=dict(backgroundColor="lavender")
+                    ), 
+                            ])
         ], width=9),
         dbc.Col(id='sidebar', children=[get_sidebar(flight_data, airport_data)], width=3)
     ], className='p-5')
@@ -103,6 +116,28 @@ def validate_datetime(start_date, start_time, end_date, end_time):
     return "", False
 
 @app.callback(
+        Output("table", "data"),
+        [ Input("flight-map", "selectedData")
+         ]
+)
+def update_table(selectedData):
+    global flight_data
+    iata_codes = []
+    
+    if selectedData is not None:
+        iata_codes = [data_point["text"] for data_point in selectedData["points"]]
+        
+    if (len(iata_codes) > 0):
+        flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
+    
+    flight_data_table = data_filtering.get_unique_flight_routes(flight_data)
+    
+    data = flight_data_table.to_dict('records')
+    return data
+
+
+
+@app.callback(
     Output('flight-map', 'figure'),
     [Input('confirm-selection-btn', 'n_clicks'),
      Input("flight-map", "selectedData"),
@@ -115,6 +150,8 @@ def validate_datetime(start_date, start_time, end_date, end_time):
 )
 def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button, start_date, start_time, end_date, end_time):
     global flight_data, FILTER_AIRCRAFT_TYPE
+    # global flight_data, FILTER_AIRCRAFT_TYPE
+    # iata_codes, a = data_filtering.map_selection(flight_data, selectedData)
 
     iata_codes = []
     ctx = callback_context
@@ -169,9 +206,10 @@ def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button,
     Output('aircraft-bar-chart', 'figure'),
     [Input('aircraft-bar-chart', 'clickData'),
      Input("reset-aircraft-button", "n_clicks"),
+     Input("flight-map", "selectedData"),
      ]
 )
-def display_clicked_data(clickData, n_clicks):
+def display_clicked_data(clickData, n_clicks, map_selection):
     global aircraft_type_count, flight_data
 
     ctx = callback_context
