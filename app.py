@@ -63,47 +63,6 @@ app.layout = html.Div([
 
 
 @app.callback(
-    Output("datetime-modal", "is_open"),
-    [Input("open-modal-btn", "n_clicks"), Input("confirm-selection-btn", "n_clicks")],
-    [State("datetime-modal", "is_open")],
-)
-def toggle_time_modal(n1, n2, is_open):
-    if n1 or n2:
-        return not is_open
-    return is_open
-
-@app.callback(
-    Output('current-datetime', 'children'),
-    [Input('confirm-selection-btn', 'n_clicks')],
-    [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
-     State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
-)
-def update_datetime(n_clicks, start_date, start_time, end_date, end_time):
-    if not n_clicks:
-        start_date, start_time, end_date, end_time = date_options[0]['value'], time_options[0]['value'], date_options[-1]['value'], time_options[-1]['value']
-    
-    return html.Div([
-        html.Span("Start Time: ", style={'font-weight': 'bold'}),
-        html.Span(f"{start_date} {start_time}, "),
-        html.Span("End Time: ", style={'font-weight': 'bold'}),
-        html.Span(f"{end_date} {end_time}")
-    ])
-
-@app.callback(
-    [Output('warning-message', 'children'), 
-     Output('confirm-selection-btn', 'disabled')],
-    [Input('start-date-dropdown', 'value'), Input('start-time-dropdown', 'value'),
-     Input('end-date-dropdown', 'value'), Input('end-time-dropdown', 'value')]
-)
-def validate_datetime(start_date, start_time, end_date, end_time):
-    start_datetime = pd.to_datetime(f'{start_date} {start_time}')
-    end_datetime = pd.to_datetime(f'{end_date} {end_time}')
-
-    if end_datetime < start_datetime:
-        return "End date-time cannot be before start date-time.", True
-    return "", False
-
-@app.callback(
         Output("table", "data"),
         [ Input("flight-map", "selectedData")
          ]
@@ -139,17 +98,14 @@ def update_table(selectedData):
 
 @app.callback(
     Output('flight-map', 'figure'),
-    [Input('confirm-selection-btn', 'n_clicks'),
-    Input("flight-map", "selectedData"),
+    [Input("flight-map", "selectedData"),
     Input('aircraft-bar-chart', 'clickData'),
     Input("reset-aircraft-button", "n_clicks"),
     Input('from_country', 'value'),
     Input('dest_country', 'value'),
     ],
-    [State('start-date-dropdown', 'value'), State('start-time-dropdown', 'value'),
-    State('end-date-dropdown', 'value'), State('end-time-dropdown', 'value')]
 )
-def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, start_date, start_time, end_date, end_time):
+def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, start_date=None, start_time=None, end_date=None, end_time=None):
 
     global flight_data, FILTER_AIRCRAFT_TYPE
 
@@ -193,8 +149,9 @@ def update_map(n_clicks, selectedData, selected_aircraft, aircraft_reset_button,
         flight_data = flight_data.loc[flight_data['dest_country'].isin(dest_country)]
     # if dest_airport_code != None and dest_airport_code != []:
         # Convert start and end dates to datetime objects
-    start_datetime = pd.to_datetime(f'{start_date} {start_time}')
-    end_datetime = pd.to_datetime(f'{end_date} {end_time}')
+
+    start_datetime = pd.to_datetime(f'{start_date} {start_time}') if start_date and start_time else datetime(1970, 1, 1)
+    end_datetime = pd.to_datetime(f'{end_date} {end_time}') if end_date and end_time else datetime(2100, 1, 1)
 
     # Filter by date and time range
     filtered_data = flight_data[

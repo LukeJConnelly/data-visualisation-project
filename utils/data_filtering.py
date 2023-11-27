@@ -7,6 +7,7 @@ def get_unique_flight_routes(clean_flight_df):
 def get_aircraft_type_count(clean_flight_df):
     aircraft_type_df = clean_flight_df["aircraft_type"]
     aircraft_type_count_df = aircraft_type_df.explode().value_counts().reset_index()
+    aircraft_type_count_df.columns = ["aircraft_type", "count"]
     return aircraft_type_count_df
 
 def get_flights_with_aircraft_type(clean_flight_df, aircraft_type):
