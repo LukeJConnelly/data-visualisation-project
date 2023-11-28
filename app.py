@@ -28,8 +28,8 @@ airport_data.index = airport_data['IATA Code']
 
 flight_data_table = data_filtering.get_unique_flight_routes(flight_data)
 
-# ORIGINAL_AIRCRAFT_TYPE_COUNT = 
-aircraft_type_count = data_filtering.get_aircraft_type_count(flight_data)
+ORIGINAL_AIRCRAFT_TYPE_COUNT = data_filtering.get_aircraft_type_count(flight_data)
+aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
 FILTER_AIRCRAFT_TYPE = False
 
 flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
@@ -63,25 +63,19 @@ app.layout = html.Div([
 
 
 @app.callback(
-        Output("airport-bar-chart", "figure"),
-        [Input("flight-map", "figure")
-        # [Input("flight-map", "selectedData")
-         ]
-)
-def update_aita_bar_chart(flight_map_fig):
-    global flight_data, airport_data, ORIGINAL_AIRPORT_DATA
-
-    airport_data = airport_data[(ORIGINAL_AIRPORT_DATA["IATA Code"].isin(flight_data["from_airport_code"])) | (ORIGINAL_AIRPORT_DATA["IATA Code"].isin(flight_data["dest_airport_code"]))]
-    return px.bar(airport_data, x='IATA Code', y='flight_degree', title='Flights from/to airport')
-
-@app.callback(
         Output("table", "data"),
-        [Input("flight-map", "figure")
-        # [Input("flight-map", "selectedData")
+        [ Input("flight-map", "selectedData")
          ]
 )
 def update_table(selectedData):
     global flight_data
+    iata_codes = []
+    
+    if selectedData is not None:
+        iata_codes = [data_point["text"][:3] for data_point in selectedData["points"]]
+        
+    if (len(iata_codes) > 0):
+        flight_data = flight_data[(flight_data["from_airport_code"].isin(iata_codes)) | (flight_data["dest_airport_code"].isin(iata_codes))]
     
     flight_data_table = data_filtering.get_unique_flight_routes(flight_data)
     
@@ -114,20 +108,18 @@ def update_table(selectedData):
 )
 def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, dates, times):
 
-    global flight_data, FILTER_AIRCRAFT_TYPE, ORIGINAL_AIRPORT_DATA
+    global flight_data, FILTER_AIRCRAFT_TYPE
 
     # print("Selected data:", selectedData)
 
     iata_codes = []
     ctx = callback_context
 
-    # flight_data = ORIGINAL_FLIGHT_DATA
-    airport_data = ORIGINAL_AIRPORT_DATA
-
     # flight_data = data_filtering.map_selection(ctx, flight_data, selectedData, ORIGINAL_FLIGHT_DATA)
     # map select
+    print(selectedData["points"])
     if selectedData is not None:
-        iata_codes = [data_point["text"][:3] for data_point in selectedData["points"]]
+        iata_codes = [data_point["text"][:3] for data_point in selectedData["points"] if "text" in data_point and not '(' in data_point["text"]]
 
     # if (ctx.triggered_id != "flight-map" or selectedData is None):
         # if triggered by brushing over map, keep previous brushing
@@ -176,23 +168,21 @@ def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_coun
     Output('aircraft-bar-chart', 'figure'),
     [Input('aircraft-bar-chart', 'clickData'),
      Input("reset-aircraft-button", "n_clicks"),
-     Input("flight-map", "figure"),
+     Input("flight-map", "selectedData"),
      ]
 )
-def display_clicked_data(clickData, n_clicks, map_figure):
+def display_clicked_data(clickData, n_clicks, map_selection):
     global aircraft_type_count, flight_data
 
     ctx = callback_context
 
-    # if (ctx.triggered_id == "reset-aircraft-button"):
-    #     aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
-    #     flight_data = ORIGINAL_FLIGHT_DATA
-    if clickData is not None:
+    if (ctx.triggered_id == "reset-aircraft-button"):
+        aircraft_type_count = ORIGINAL_AIRCRAFT_TYPE_COUNT
+        flight_data = ORIGINAL_FLIGHT_DATA
+    elif clickData is not None:
         aircraft_type = clickData["points"][0]["x"]
         aircraft_type_count = aircraft_type_count.query(f'aircraft_type == "{aircraft_type}"')
         flight_data = data_filtering.get_flights_with_aircraft_type(flight_data, aircraft_type)
-    
-    aircraft_type_count = data_filtering.get_aircraft_type_count(flight_data)
 
     aircraft_type_bar = px.bar(aircraft_type_count, x='aircraft_type', y='count', title='Flights from/to airport')
     return aircraft_type_bar
