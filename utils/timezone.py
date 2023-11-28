@@ -97,10 +97,13 @@ def get_airport_time_diffs(airport_IATA_list, airport_data, local_datetime=datet
                 timezone_diff.append(time_diff)
             except Exception:
                 timezone_diff.append(None)
-    df = pd.DataFrame({"from_airport": from_airport, "dest_airport": dest_airport, "timezone_diff": timezone_diff})
+    df = pd.DataFrame({"from_airport_code": from_airport, "dest_airport_code": dest_airport, "timezone_diff": timezone_diff})
     return df 
 
-
+def add_tz_diff_to_flight_df(flight_df, airport_time_diff_df):
+    new_df = flight_df.copy()
+    merged_df = new_df.merge(airport_time_diff_df, on=['from_airport_code', 'dest_airport_code'], how='left')
+    return merged_df
 
 
 if __name__ == "__main__":
@@ -121,6 +124,9 @@ if __name__ == "__main__":
     else:
         tz_diff = get_airport_time_diffs(airports, airport_data)
         tz_diff.to_csv(TZ_FILEPATH, index=False)
+
+    flight_data_with_timediff = add_tz_diff_to_flight_df(flight_data, tz_diff)
+    print(flight_data_with_timediff)
         
     print(tz_diff.head())
     print(tz_diff.tail())

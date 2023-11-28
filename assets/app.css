@@ -1,0 +1,49 @@
+#sidebar-contents {
+    border-left: 3px solid black;
+    padding-left: 20px;
+}
+
+#sidebar-graphs {
+    max-height: 65vh;
+    overflow-y: scroll;
+}
+
+.btn-primary {
+    background-color: #87CEEB;
+    border-color: #5CA6D1;
+
+    &:hover {
+        background-color: #5CA6D1;
+        border-color: #5CA6D1;
+    }
+
+    &:active {
+        background-color: #5CA6D1;
+        border-color: #5CA6D1;
+    }
+}
+
+.btn-secondary {
+    background-color: #FFA07A;
+    border-color: #CC7A5C;
+
+    &:hover {
+        background-color: #CC7A5C;
+        border-color: #CC7A5C;
+    }
+
+    &:active {
+        background-color: #CC7A5C;
+        border-color: #CC7A5C;
+    }
+}
+
+.primary-label {
+    font-weight: 600;
+    color: #5CA6D1;
+}
+
+.secondary-label {
+    font-weight: 600;
+    color: #CC7A5C;
+}
