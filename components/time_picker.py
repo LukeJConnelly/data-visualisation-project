@@ -53,6 +53,12 @@ def get_time_picker(date_options, time_options):
                         .update_polars(
                             radialaxis={"visible": False},
                             angularaxis={"ticks": "inside", "visible": False},
+                            hole=0.6,
+                        ).add_annotation(
+                            text="24h<br>clock",
+                            x=0.5,
+                            y=0.5,
+                            showarrow=False
                         ),
                         config={
                             "modeBarButtonsToRemove": [
