@@ -83,7 +83,6 @@ def update_table(selectedData):
     return data
 
 
-
 # @app.callback(
 #     Output('flight-map', 'figure'),
 #     [Input('confirm-selection-btn', 'n_clicks'), Input('flight-map', "selectedData"), Input()],
@@ -103,12 +102,13 @@ def update_table(selectedData):
     Input("reset-aircraft-button", "n_clicks"),
     Input('from_country', 'value'),
     Input('dest_country', 'value'),
+    Input("date-hist", "selectedData"),
+    Input('time-bar', "selectedData")
     ],
 )
-def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, start_date=None, start_time=None, end_date=None, end_time=None):
+def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, dates, times):
 
     global flight_data, FILTER_AIRCRAFT_TYPE
-
 
     # print("Selected data:", selectedData)
 
@@ -150,15 +150,13 @@ def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_coun
     # if dest_airport_code != None and dest_airport_code != []:
         # Convert start and end dates to datetime objects
 
-    start_datetime = pd.to_datetime(f'{start_date} {start_time}') if start_date and start_time else datetime(1970, 1, 1)
-    end_datetime = pd.to_datetime(f'{end_date} {end_time}') if end_date and end_time else datetime(2100, 1, 1)
+    filtered_data = flight_data
 
-    # Filter by date and time range
-    filtered_data = flight_data[
-        (flight_data['departure_time'] >= start_datetime) & 
-        (flight_data['departure_time'] <= end_datetime)
-    ]
-
+    if dates:
+        filtered_data = filtered_data.loc[filtered_data.apply(lambda x: x['departure_time'].strftime('%Y-%m-%d') in [d['x'] for d in dates['points']], axis=1)]
+    if times:
+        filtered_data = filtered_data.loc[filtered_data.apply(lambda x: x['departure_time'].strftime('%H') in [t['theta'] for t in times['points']], axis=1)]
+    
     return get_map(filtered_data, airport_data).figure 
     #     flight_data = flight_data.loc[flight_data['dest_airport_code'].isin(dest_airport_code)]
 
