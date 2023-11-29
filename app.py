@@ -35,7 +35,7 @@ FILTER_AIRCRAFT_TYPE = False
 flight_data['departure_time'] = pd.to_datetime(flight_data['departure_time'])
 date_options, time_options = get_date_time_options(flight_data['departure_time'])
 
-COLOURING_CHOICES = ['price', 'co2_emissions'] # duration, stops, none
+COLOURING_CHOICES = ['none', 'price', 'co2_emissions', 'stops'] # duration
 choice = 0
 
 QUANTILES = {
@@ -43,7 +43,7 @@ QUANTILES = {
          .mean().reset_index(name=k)[k].quantile(i) 
          for i in [0.25, 0.5, 0.75]
     ]
-    for k in COLOURING_CHOICES
+    for k in COLOURING_CHOICES[1:]
 }
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -53,7 +53,8 @@ app.layout = html.Div([
     dbc.Row(id='container', children=[
         dbc.Col(id='main', children=[
             html.Div(id='main-contents', children=[
-                get_time_picker(date_options, time_options), get_map(flight_data, airport_data, COLOURING_CHOICES[choice], QUANTILES[COLOURING_CHOICES[choice]]), get_about_modal(),
+                get_time_picker(date_options, time_options), get_map(flight_data, airport_data, COLOURING_CHOICES[choice], None if choice == 0 else QUANTILES[COLOURING_CHOICES[choice]]), get_about_modal(),
+                dcc.Dropdown(COLOURING_CHOICES, COLOURING_CHOICES[choice], id='colour_value_choice', clearable=False),
                 dash_table.DataTable(
                         id='table',
                         columns=[{"name": i, "id": i} 
@@ -120,12 +121,15 @@ def update_table(selectedData):
     Input('from_country', 'value'),
     Input('dest_country', 'value'),
     Input("date-hist", "selectedData"),
-    Input('time-bar', "selectedData")
+    Input('time-bar', "selectedData"),
+    Input('colour_value_choice', 'value')
     ],
 )
-def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, dates, times):
+def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_country, dest_country, dates, times, colour_update):
 
-    global flight_data, FILTER_AIRCRAFT_TYPE, ORIGINAL_AIRPORT_DATA
+    global flight_data, FILTER_AIRCRAFT_TYPE, ORIGINAL_AIRPORT_DATA, choice
+
+    choice = COLOURING_CHOICES.index(colour_update)
 
     # print("Selected data:", selectedData)
 
@@ -177,7 +181,7 @@ def update_map(selectedData, selected_aircraft, aircraft_reset_button, from_coun
     if times:
         filtered_data = filtered_data.loc[filtered_data.apply(lambda x: x['departure_time'].strftime('%H') in [t['theta'] for t in times['points']], axis=1)]
     
-    return get_map(filtered_data, airport_data, COLOURING_CHOICES[choice], QUANTILES[COLOURING_CHOICES[choice]]).figure 
+    return get_map(filtered_data, airport_data, COLOURING_CHOICES[choice], None if choice == 0 else QUANTILES[COLOURING_CHOICES[choice]]).figure 
     #     flight_data = flight_data.loc[flight_data['dest_airport_code'].isin(dest_airport_code)]
 
     # return get_map(flight_data, airport_data).figure
