@@ -1,3 +1,4 @@
+from bleach import clean
 import pandas as pd
 import os
 import json
@@ -6,7 +7,7 @@ import ast
 from utils import data_preprocessing
 # import data_preprocessing
 
-def load_data(raw_flights_file_path= "data/flights.csv", raw_airport_file_path="data/GlobalAirportDatabase/GlobalAirportDatabase.txt"):
+def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_airport_file_path="data/GlobalAirportDatabase/GlobalAirportDatabase.txt"):
     """
     Loads the data as pd dataframes Assumes a data folder named "data" in project folder.
     If no clean data is found the raw data will be preprocessed and saved as csv.
@@ -23,11 +24,13 @@ def load_data(raw_flights_file_path= "data/flights.csv", raw_airport_file_path="
     
     # get clean flight data
     if clean_flight_df_exist:
-        clean_flight_df = pd.read_csv("data/clean_flights.csv")
+        clean_flight_df = pd.read_csv("data/clean_flights.csv") if not sample_mode else pd.read_csv("data/clean_flights.csv", nrows=500)
         # convert lists to list after load as string
         for col_with_list in ["aircraft_type", "airline_name", "flight_number"]:
             # clean_flight_df[col_with_list] = clean_flight_df[col_with_list].apply(json.loads)
             clean_flight_df[col_with_list] = clean_flight_df[col_with_list].apply(ast.literal_eval)
+        clean_flight_df["departure_time"] = pd.to_datetime(clean_flight_df["departure_time"])
+        clean_flight_df["arrival_time"] = pd.to_datetime(clean_flight_df["arrival_time"])
 
     # get clean airport data
     if clean_airport_df_exist:
