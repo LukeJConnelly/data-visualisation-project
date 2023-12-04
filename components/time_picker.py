@@ -5,14 +5,14 @@ import plotly.graph_objects as go
 from utils.settings import to_and_from_colour
 
 def get_date_data(flight_data):
-    return flight_data['departure_time'].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={"index": "label", "departure_time": "count"})
+    return flight_data['departure_time'].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={"departure_time": "value"})
 
 def get_date_hist(flight_data, start_date, end_date):
     num_days = (end_date - start_date).days + 1
     date_options = get_date_data(flight_data)
     return dcc.Graph(id="date-hist",
                      figure=go.Figure(
-                     px.histogram(date_options, x="label", y="count", nbins=num_days, range_x=[start_date, end_date])
+                     px.histogram(date_options, x="value", y="count", nbins=num_days, range_x=[start_date, end_date])
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
@@ -26,7 +26,7 @@ def get_date_hist(flight_data, start_date, end_date):
                      style={"height": "15vh"},)
 
 def get_time_data(flight_data, is_from=True):
-    return flight_data['departure_time' if is_from else 'arrival_time'].apply(lambda x: x.strftime('%H')).value_counts().reset_index().rename(columns={"index": "value", "departure_time": "count", "arrival_time": "count"})
+    return flight_data['departure_time' if is_from else 'arrival_time'].apply(lambda x: x.strftime('%H')).value_counts().reset_index().rename(columns={"departure_time": "value", "arrival_time": "value"})
 
 def get_time_bar(flight_data, is_from=True):
     time_options = get_time_data(flight_data, is_from)
