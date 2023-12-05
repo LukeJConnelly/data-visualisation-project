@@ -27,6 +27,22 @@
     background-color: #9ab6e6;
 }
 
+#map-container {
+    padding: 1%;
+    padding-left: 2%;
+}
+
 #flight-map-from-container, #flight-map-to-container {
-    max-width: 50%;
+    max-width: 45%;
+    padding: 0;
+}
+
+.colourblind-label {
+    color: white !important;
+    padding-right: 10px;
+    margin: auto;
+}
+
+#colorblind-mode-input {
+    margin: auto;
 }

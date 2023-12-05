@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
-from utils.settings import to_and_from_colour
+from utils.settings import get_colours
 
 def get_date_data(flight_data):
     return flight_data['departure_time'].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={"departure_time": "value"})
@@ -37,7 +37,7 @@ def get_time_bar(flight_data, is_from=True):
                         dragmode=False,
                     )
                     .update_traces(
-                        marker={"color": to_and_from_colour[is_from]},
+                        marker={"color": get_colours()[is_from]},
                     )
                     .update_polars(
                         radialaxis={"visible": False},

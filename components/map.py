@@ -4,7 +4,7 @@ from components.country_airport_dicts import airport_to_country
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
-from utils.settings import to_and_from_colour
+from utils.settings import get_colours
 
 def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True):
     fig = go.Figure()
@@ -20,7 +20,7 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
         mode="lines",
         lat=np.array(grouped_flight_data[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
         lon=np.array(grouped_flight_data[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
-        line=dict(width=1, color=to_and_from_colour[is_from]),
+        line=dict(width=1, color=get_colours()[is_from]),
         name="Flights",
         opacity=0.1,
     ))
@@ -51,11 +51,11 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
                 mode="markers",
                 lat=[airport['Latitude Decimal Degrees']],
                 lon=[airport['Longitude Decimal Degrees']],
-                marker=dict(size=round((np.power(selected_totals[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights), color=to_and_from_colour[is_from]),
+                marker=dict(size=round((np.power(selected_totals[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights), color=get_colours()[is_from]),
                 name=airport['IATA Code'],
                 text=f"{airport['IATA Code']} - {airport_to_country[airport['IATA Code']]} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
                 hoverinfo='text'
             ))
 
-    fig.update_layout(mapbox_style='open-street-map',  margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, mapbox_bounds={"west": -180, "east": 180, "south": -90, "north": 90})
+    fig.update_layout(mapbox_style='carto-positron',  margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, mapbox_bounds={"west": -180, "east": 180, "south": -90, "north": 90})
     return dcc.Graph(id=f'flight-map-{"from" if is_from else "to"}', figure=fig)

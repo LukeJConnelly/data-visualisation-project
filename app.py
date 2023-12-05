@@ -3,10 +3,11 @@ from dash import callback_context
 from dash.dependencies import Input, Output
 from components.col_chart import get_histogram_price, get_histogram_country
 from components.map import get_map
-from components.table import get_table, get_table_data
+from components.table import get_table, get_table_data, get_table_header_styling
 from components.time_picker import get_time_bar, get_date_hist
 import dash_bootstrap_components as dbc
 import pandas as pd
+from utils.settings import get_colours, set_colour_blind_mode
 
 import utils.data_loader as data_loader
 
@@ -26,7 +27,10 @@ print("Finished!")
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = html.Div([
-    dbc.NavbarSimple(brand='FlightVis', brand_href='#', color='dark', dark=True),
+    dbc.NavbarSimple(brand='FlightVis', brand_href='#', color='dark', dark=True, 
+                     children=[dbc.NavItem(dbc.Label("Colourblind mode", class_name="colourblind-label")), 
+                               dbc.NavItem(dbc.Checklist(options=[{"label": "", "value": 1}],
+                                                         value=[0],id="colorblind-mode-input",switch=True))]),
     dbc.Row(id='graph-container', 
             children=[
                 dbc.Col(get_time_bar(flight_data, is_from=True), width=1),
@@ -38,8 +42,9 @@ app.layout = html.Div([
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
-            children=[dbc.Col(id='flight-map-from-container', 
-                              children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True)]), 
+            children=[dbc.Col(id='flight-map-from-container',
+                              children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True)]),
+                      dbc.Col(id='legend', children=[html.H5('Legend'), html.P("dots do stuff other dots do other stuff yada yada")], width=1),
                       dbc.Col(id='flight-map-to-container',
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False)])],
             className='m-2'),
@@ -56,14 +61,18 @@ app.layout = html.Div([
     Output('time-bar-from', 'figure'),
     Output('time-bar-to', 'figure'),
     Output('table', 'data'),
+    Output('table', 'style_header_conditional'),
 ],[
     Input('flight-map-from', 'selectedData'),
     Input('flight-map-to', 'selectedData'),
     Input('date-hist', 'selectedData'),
     Input('time-bar-from', 'selectedData'),
     Input('time-bar-to', 'selectedData'),
+    Input("colorblind-mode-input", "value"),
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo):
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, colourblind_mode):
+    set_colour_blind_mode(colourblind_mode[-1] == 1)
+    
     global flight_data, airport_data, ORIGINAL_FLIGHT_DATA_GROUPED, ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
 
     flight_data = ORIGINAL_FLIGHT_DATA
@@ -89,7 +98,8 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_date_hist(flight_data, MIN_DAY, MAX_DAY).figure,
         get_time_bar(flight_data, is_from=True).figure,
         get_time_bar(flight_data, is_from=False).figure,
-        get_table_data(flight_data).to_dict("records")
+        get_table_data(flight_data).to_dict("records"),
+        get_table_header_styling(),
     ]
     
     return output_graphs
