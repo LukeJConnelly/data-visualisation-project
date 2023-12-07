@@ -40,8 +40,8 @@ app.layout = html.Div([
                 dbc.Col(get_date_hist(flight_data, MIN_DAY, MAX_DAY), width=6),
                 dbc.Col(get_days_of_week_hist(flight_data), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
-                dbc.Col(get_histogram_country(flight_data, is_from=True), width=3),
-                dbc.Col(get_histogram_country(flight_data, is_from=False), width=3),
+                dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
+                dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
@@ -54,7 +54,7 @@ app.layout = html.Div([
     dbc.Row(id='table-container', 
             children=[
                         get_matrix(flight_data, airport_data),
-                        get_table(flight_data),
+                        get_table(flight_data, airport_data),
             ], 
             className='m-2')
 ])
@@ -118,7 +118,7 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_time_bar(flight_data, is_from=True).figure,
         get_time_bar(flight_data, is_from=False).figure,
         get_days_of_week_hist(flight_data).figure,
-        get_table_data(flight_data).to_dict("records"),
+        get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
         get_legend(*get_colours())
     ]

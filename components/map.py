@@ -1,6 +1,6 @@
 from dash import dcc
 import plotly.graph_objects as go
-from components.country_airport_dicts import airport_to_country
+# from components.country_airport_dicts import airport_to_country
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
@@ -39,7 +39,7 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
                                        lon=[airport['Longitude Decimal Degrees']],
                                        mode='markers',
                                        marker=go.scattermapbox.Marker(size=round((np.power(total_flights[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights) + 1, color='black'),
-                                       text=f"{airport['IATA Code']} - {airport_to_country[airport['IATA Code']]} - {total_flights[i]} flights",
+                                       text=f"{airport['IATA Code']} - {airport['Country']} - {total_flights[i]} flights",
                                        hoverinfo='text',
                                        customdata=[airport['IATA Code']],
                                        opacity=0.2 if is_filtered_data else 1,))
@@ -53,7 +53,7 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
                 lon=[airport['Longitude Decimal Degrees']],
                 marker=dict(size=round((np.power(selected_totals[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights), color=get_colours()[is_from]),
                 name=airport['IATA Code'],
-                text=f"{airport['IATA Code']} - {airport_to_country[airport['IATA Code']]} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
+                text=f"{airport['IATA Code']} - {airport['Country']} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
                 hoverinfo='text'
             ))
 

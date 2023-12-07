@@ -3,10 +3,13 @@ from dash import dash_table
 from matplotlib.font_manager import font_family_aliases
 from utils.settings import get_colours
 
-from  utils import data_filtering
+from utils import data_filtering
+from utils.airport_country_mapping import get_flight_df_with_country
 
-def get_table_data(flight_data):
+def get_table_data(flight_data, airport_data):
     flight_data_table = data_filtering.get_unique_flight_routes(flight_data)
+    flight_data_table = get_flight_df_with_country(flight_data_table, airport_data)
+
     new_col_names = {
         "from_country": "Departure country",
         "from_airport_code": "Departure airport code",
@@ -22,8 +25,8 @@ def get_table_header_styling():
             {'if': {'column_id': ["Arrival country", "Arrival airport code"]}, 'backgroundColor': get_colours()[False], 'textAlign': 'right'},
             {'if': {'column_id': '# of flights'}, 'textAlign': 'center'}]
 
-def get_table(flight_data):
-    flight_data_table = get_table_data(flight_data)
+def get_table(flight_data, airport_data):
+    flight_data_table = get_table_data(flight_data, airport_data)
     return dash_table.DataTable(
             id='table',
             columns=[{"name": i, "id": i} 

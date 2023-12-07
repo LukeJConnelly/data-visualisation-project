@@ -3,6 +3,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 from utils.settings import get_colours
 
+from utils.airport_country_mapping import get_flight_df_with_country
+
 def get_bar_chart(flight_data):
     return dcc.Graph(
             id='bar-chart',
@@ -24,10 +26,12 @@ def get_histogram_price(flight_data):
             style={"height": "15vh"}
         )
 
-def get_histogram_country(flight_data, is_from=True):
+def get_histogram_country(flight_data, airport_data, is_from=True):
+    flight_df = get_flight_df_with_country(flight_data, airport_data)
+
     return dcc.Graph(
             id='country-hist'+ ("-from" if is_from else "-to"),
-            figure=px.histogram(flight_data, x="from_country" if is_from else "dest_country")
+            figure=px.histogram(flight_df, x="from_country" if is_from else "dest_country")
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
