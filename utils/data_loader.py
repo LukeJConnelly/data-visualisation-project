@@ -57,6 +57,8 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
 
     # add degree to airport
     clean_airport_df = data_preprocessing.add_airport_degree(clean_airport_df, clean_flight_df)
+    clean_flight_df['departure_time_gmt'] = data_preprocessing.get_gmt_time(clean_flight_df['departure_time'], clean_flight_df['from_airport_code'], clean_airport_df)
+    clean_flight_df['arrival_time_gmt'] = data_preprocessing.get_gmt_time(clean_flight_df['arrival_time'], clean_flight_df['dest_airport_code'], clean_airport_df)
 
     # save clean data types
     clean_flight_df.to_csv("data/clean_flights.csv", index=False)

@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-
+from utils.timezone import get_timezone_from_IATA
+from tqdm import tqdm
+import pytz
 
 # import data_loader
 
@@ -199,7 +201,7 @@ def add_manual_airport_data(airport_df):
             airport_df.at[index, name] = val
     return airport_df
 
-def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time", "duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
         flight_df = flight_df[wanted_cols]
@@ -221,6 +223,14 @@ def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "L
     airport_df = airport_df[airport_df['IATA Code'].isin(airport_list)]
     
     return airport_df
+
+def get_gmt_time(times, codes, airport_df):
+    timezones = [get_timezone_from_IATA(airport_df, c) for c in tqdm(airport_df['IATA Code'], desc="Calculating timezones")]
+    timezone_lookup = dict(zip(airport_df['IATA Code'], timezones))
+
+    gmt_tz = pytz.timezone('GMT')
+    
+    return [timezone_lookup[c].localize(t).astimezone(gmt_tz) for t, c in tqdm(zip(times, codes), desc="Adding GMT times to df")]
 
 
 # if __name__ == "__main__":
