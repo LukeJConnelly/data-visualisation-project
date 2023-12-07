@@ -7,6 +7,27 @@ from utils.settings import get_colours
 def get_date_data(flight_data):
     return flight_data['departure_time'].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={"departure_time": "value"})
 
+def get_days_of_week_data(flight_data):
+    return flight_data['departure_time'].apply(lambda x: x.weekday()).value_counts().reset_index().rename(columns={"departure_time": "value"})
+
+def get_days_of_week_hist(flight_data):
+    day_options = get_days_of_week_data(flight_data)
+    return dcc.Graph(id="days-of-week-hist",
+                        figure=go.Figure(
+                        px.histogram(day_options, x="value", y="count", nbins=7, range_x=[-0.5, 6.5])
+                        .update_xaxes(tickvals=[0, 1, 2, 3, 4, 5, 6], ticktext=['M', 'T', 'W', 'T', 'F', 'S', 'S'])
+                        .update_layout(
+                            dragmode="select",
+                            selectdirection="h",
+                            xaxis={"fixedrange": True},
+                            yaxis={"fixedrange": True, "visible": False},
+                            yaxis_title=None,
+                            xaxis_title=None,
+                            margin=dict(t=0, b=0, l=0, r=0),)),
+                        config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d",],
+                                "displaylogo": False,},
+                        style={"height": "15vh"},)
+
 def get_date_hist(flight_data, start_date, end_date):
     num_days = (end_date - start_date).days + 1
     date_options = get_date_data(flight_data)
