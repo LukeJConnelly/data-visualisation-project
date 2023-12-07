@@ -3,13 +3,15 @@ from dash import callback_context
 from dash.dependencies import Input, Output
 from components.col_chart import get_histogram_price, get_histogram_country
 from components.map import get_map
+from components.matrix import get_matrix
 from components.table import get_table, get_table_data, get_table_header_styling
 from components.time_picker import get_time_bar, get_date_hist
 import dash_bootstrap_components as dbc
 import pandas as pd
 from utils.settings import get_colours, set_colour_blind_mode
 
-import utils.data_loader as data_loader
+from utils import data_loader
+from utils import data_filtering
 
 SAMPLE_MODE = False
 
@@ -49,7 +51,10 @@ app.layout = html.Div([
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False)])],
             className='m-2'),
     dbc.Row(id='table-container', 
-            children=[get_table(flight_data)], 
+            children=[
+                        get_matrix(flight_data, airport_data),
+                        get_table(flight_data),
+            ], 
             className='m-2')
 ])
 
