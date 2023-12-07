@@ -53,14 +53,15 @@ def clean_co2(data):
     '''
     # scaling the co2_emissions column
     scaler = MinMaxScaler()
-    data['co2_emissions'] = scaler.fit_transform(data[['co2_emissions']])
+    data.loc[:, 'co2_emissions'] = scaler.fit_transform(data[['co2_emissions']])
 
     # calculating and inserting avg c02 emissions for each route
     groups = data.groupby(["from_airport_code", "dest_airport_code"])["co2_emissions"].mean()
-    data['avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
+    # ! Gives some warning
+    data.loc[:, 'avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
 
     # calculating and inserting difference between a flight and its' average co2 emissons
-    data['co2_percentage'] = ((data['avg_co2_route'] - data['co2_emissions'])/data['avg_co2_route'])
+    data.loc[:, 'co2_percentage'] = ((data['avg_co2_route'] - data['co2_emissions'])/data['avg_co2_route'])
     return data
 
 #######################################################
@@ -161,34 +162,41 @@ def add_manual_airport_data(airport_df):
     missing_data = {
         "LHR": {
             "Latitude Decimal Degrees": 51.470,
-            "Longitude Decimal Degrees": -0.454
+            "Longitude Decimal Degrees": -0.454,
+            "Country": "UNITED KINGDOM"
         },
         "NBO": {
             "Latitude Decimal Degrees": -1.333,
-            "Longitude Decimal Degrees": 36.927
+            "Longitude Decimal Degrees": 36.927,
+            "Country": "KENYA"
         },
         "ICN": {
             "Latitude Decimal Degrees": 37.469,
-            "Longitude Decimal Degrees": 126.450
+            "Longitude Decimal Degrees": 126.450,
+            "Country": "SOUTH KOREA"
         },
         "ATH": {
             "Latitude Decimal Degrees": 37.936401,
-            "Longitude Decimal Degrees": 23.9445
+            "Longitude Decimal Degrees": 23.9445,
+            "Country": "GREECE"
         },
         "PVG": {
             "Latitude Decimal Degrees": 31.143,
-            "Longitude Decimal Degrees": 121.805
+            "Longitude Decimal Degrees": 121.805,
+            "Country": "CHINA"
         },
         "SAW": {
             "Latitude Decimal Degrees": 40.898,
-            "Longitude Decimal Degrees": 29.309
+            "Longitude Decimal Degrees": 29.309,
+            "Country": "TURKEY"
         },
         "DME": {
             "Latitude Decimal Degrees": 55.408,
-            "Longitude Decimal Degrees": 37.906
+            "Longitude Decimal Degrees": 37.906,
+            "Country": "RUSSIA"
         }
     }
-
+    
     for airport, missing_data in missing_data.items():
         if not (airport in airport_df['IATA Code'].values):
             new_row = pd.DataFrame([{"IATA Code": airport, **missing_data}])
@@ -199,7 +207,8 @@ def add_manual_airport_data(airport_df):
             airport_df.at[index, name] = val
     return airport_df
 
-def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+# def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","dest_airport_code","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
         flight_df = flight_df[wanted_cols]
@@ -208,7 +217,7 @@ def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_co
     return flight_df
 
 
-def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Latitude Decimal Degrees", "Longitude Decimal Degrees"]):
+def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Country", "Latitude Decimal Degrees", "Longitude Decimal Degrees"]):
 # def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Latitude Decimal Degrees", "Longitude Decimal Degrees", "flights in", "flights out", "flight_degree"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
