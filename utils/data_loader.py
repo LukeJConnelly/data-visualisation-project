@@ -49,6 +49,8 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
             clean_flight_df[col_with_list] = clean_flight_df[col_with_list].apply(ast.literal_eval)
         clean_flight_df["departure_time"] = pd.to_datetime(clean_flight_df["departure_time"])
         clean_flight_df["arrival_time"] = pd.to_datetime(clean_flight_df["arrival_time"])
+        clean_flight_df["departure_time_gmt"] = pd.to_datetime(clean_flight_df["departure_time_gmt"])
+        clean_flight_df["arrival_time_gmt"] = pd.to_datetime(clean_flight_df["arrival_time_gmt"])
 
     # get clean airport data
     if clean_airport_df_exist:

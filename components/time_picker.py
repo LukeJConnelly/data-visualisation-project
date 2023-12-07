@@ -4,14 +4,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 from utils.settings import get_colours
 
-def get_date_data(flight_data):
-    return flight_data['departure_time'].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={"departure_time": "value"})
+def get_date_data(flight_data, time_column):
+    return flight_data[time_column].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={time_column: "value"})
 
-def get_days_of_week_data(flight_data):
-    return flight_data['departure_time'].apply(lambda x: x.weekday()).value_counts().reset_index().rename(columns={"departure_time": "value"})
+def get_days_of_week_data(flight_data, time_column):
+    return flight_data[time_column].apply(lambda x: x.weekday()).value_counts().reset_index().rename(columns={time_column: "value"})
 
-def get_days_of_week_hist(flight_data):
-    day_options = get_days_of_week_data(flight_data)
+def get_days_of_week_hist(flight_data, time_column_suffix):
+    day_options = get_days_of_week_data(flight_data, 'departure_time' + time_column_suffix)
     return dcc.Graph(id="days-of-week-hist",
                         figure=go.Figure(
                         px.histogram(day_options, x="value", y="count", nbins=7, range_x=[-0.5, 6.5])
@@ -28,9 +28,9 @@ def get_days_of_week_hist(flight_data):
                                 "displaylogo": False,},
                         style={"height": "15vh"},)
 
-def get_date_hist(flight_data, start_date, end_date):
+def get_date_hist(flight_data, time_column_suffix, start_date, end_date):
     num_days = (end_date - start_date).days + 1
-    date_options = get_date_data(flight_data)
+    date_options = get_date_data(flight_data, 'departure_time' + time_column_suffix)
     return dcc.Graph(id="date-hist",
                      figure=go.Figure(
                      px.histogram(date_options, x="value", y="count", nbins=num_days, range_x=[start_date, end_date])
@@ -46,11 +46,11 @@ def get_date_hist(flight_data, start_date, end_date):
                              "displaylogo": False,},
                      style={"height": "15vh"},)
 
-def get_time_data(flight_data, is_from=True):
-    return flight_data['departure_time' if is_from else 'arrival_time'].apply(lambda x: x.strftime('%H')).value_counts().reset_index().rename(columns={"departure_time": "value", "arrival_time": "value"})
+def get_time_data(flight_data, time_column):
+    return flight_data[time_column].apply(lambda x: x.strftime('%H')).value_counts().reset_index().rename(columns={time_column: "value"})
 
-def get_time_bar(flight_data, is_from=True):
-    time_options = get_time_data(flight_data, is_from)
+def get_time_bar(flight_data, time_column_suffix, is_from=True):
+    time_options = get_time_data(flight_data, ('departure_time' if is_from else 'arrival_time') + time_column_suffix)
     return dcc.Graph(id="time-bar" + ("-from" if is_from else "-to"),
                     figure=px.bar_polar(time_options, r="count", theta="value")
                     .update_layout(

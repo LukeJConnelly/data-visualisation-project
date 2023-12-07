@@ -11,7 +11,6 @@ import pandas as pd
 from utils.settings import get_colours, set_colour_blind_mode
 
 from utils import data_loader
-from utils import data_filtering
 
 SAMPLE_MODE = False
 
@@ -22,8 +21,9 @@ grouped_flight_data_counts = flight_data.groupby(['from_airport_code', 'dest_air
 grouped_flight_data_from = pd.merge(grouped_flight_data_counts, airport_data, left_on='from_airport_code', right_on='IATA Code')
 grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
 ORIGINAL_FLIGHT_DATA_GROUPED = pd.merge(grouped_flight_data_from, grouped_flight_data_to, on=['from_airport_code', 'dest_airport_code', 'count'], suffixes=('_from', '_to')).drop(['IATA Code_from', 'IATA Code_to'], axis=1)
-MIN_DAY = ORIGINAL_FLIGHT_DATA['departure_time'].min().date()
-MAX_DAY = ORIGINAL_FLIGHT_DATA['departure_time'].max().date()
+MIN_DAY = ORIGINAL_FLIGHT_DATA['departure_time'].min().date()-pd.Timedelta(days=1)
+MAX_DAY = ORIGINAL_FLIGHT_DATA['departure_time'].max().date()+pd.Timedelta(days=1)
+time_column_suffix = ''
 print("Finished!")
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -35,10 +35,14 @@ app.layout = html.Div([
                                                          value=[0],id="colorblind-mode-input",switch=True))]),
     dbc.Row(id='graph-container', 
             children=[
-                dbc.Col(get_time_bar(flight_data, is_from=True), width=1),
-                dbc.Col(get_time_bar(flight_data, is_from=False), width=1),
-                dbc.Col(get_date_hist(flight_data, MIN_DAY, MAX_DAY), width=6),
-                dbc.Col(get_days_of_week_hist(flight_data), width=2),
+                dbc.Col(children=[dbc.Label("Local time"), 
+                                  html.Div(dbc.Checklist(options=[{"label": "", "value": 1}],
+                                                value=[0],id="timezone-input",switch=True)),
+                                  dbc.Label("GMT time")], id="timezone-input-container", width=1, style={'vertical-align': 'top'}),
+                dbc.Col(get_time_bar(flight_data, time_column_suffix, is_from=True), width=1),
+                dbc.Col(get_time_bar(flight_data, time_column_suffix, is_from=False), width=1),
+                dbc.Col(get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY), width=6),
+                dbc.Col(get_days_of_week_hist(flight_data, time_column_suffix), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
@@ -77,9 +81,10 @@ app.layout = html.Div([
     Input('time-bar-from', 'selectedData'),
     Input('time-bar-to', 'selectedData'),
     Input('days-of-week-hist', 'selectedData'),
+    Input("timezone-input", "value"),
     Input("colorblind-mode-input", "value"),
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, colourblind_mode):
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, timezone_mode, colourblind_mode):
     
     # hacky fix for double histogram callbacking
     if (callback_context.triggered[0]['prop_id'] == 'days-of-week-hist.selectedData' and days and not days['points']):
@@ -89,7 +94,9 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
     
     set_colour_blind_mode(colourblind_mode[-1] == 1)
     
-    global flight_data, airport_data, ORIGINAL_FLIGHT_DATA_GROUPED, ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
+    global flight_data, airport_data, ORIGINAL_FLIGHT_DATA_GROUPED, ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA, time_column_suffix
+
+    time_column_suffix = '_gmt' if timezone_mode[-1] == 1 else ''
 
     flight_data = ORIGINAL_FLIGHT_DATA
 
@@ -100,24 +107,24 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         flight_data = flight_data[flight_data["dest_airport_code"].isin([d["customdata"] for d in selectedDataTo["points"] if "customdata" in d])]
 
     if dates and dates['points']:
-        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'].strftime('%Y-%m-%d') in [d['x'] for d in dates['points']], axis=1)]
+        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'+time_column_suffix].strftime('%Y-%m-%d') in [d['x'] for d in dates['points']], axis=1)]
     
     if timesFrom and timesFrom['points']:
-        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'].strftime('%H') in [t['theta'] for t in timesFrom['points']], axis=1)]
+        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'+time_column_suffix].strftime('%H') in [t['theta'] for t in timesFrom['points']], axis=1)]
 
     if timesTo and timesTo['points']:
-        flight_data = flight_data.loc[flight_data.apply(lambda x: x['arrival_time'].strftime('%H') in [t['theta'] for t in timesTo['points']], axis=1)]
+        flight_data = flight_data.loc[flight_data.apply(lambda x: x['arrival_time'+time_column_suffix].strftime('%H') in [t['theta'] for t in timesTo['points']], axis=1)]
 
     if days and days['points']:
-        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'].weekday() in [d['x'] for d in days['points']], axis=1)]
+        flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'+time_column_suffix].weekday() in [d['x'] for d in days['points']], axis=1)]
 
     output_graphs = [
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True).figure,
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False).figure,
-        get_date_hist(flight_data, MIN_DAY, MAX_DAY).figure,
-        get_time_bar(flight_data, is_from=True).figure,
-        get_time_bar(flight_data, is_from=False).figure,
-        get_days_of_week_hist(flight_data).figure,
+        get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY).figure,
+        get_time_bar(flight_data, time_column_suffix, is_from=True).figure,
+        get_time_bar(flight_data, time_column_suffix, is_from=False).figure,
+        get_days_of_week_hist(flight_data, time_column_suffix).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
         get_legend(*get_colours())

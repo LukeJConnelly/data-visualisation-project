@@ -46,3 +46,14 @@
 #colorblind-mode-input {
     margin: auto;
 }
+
+#timezone-input-container {
+    padding-top: 2vh;
+    max-height: 12vh;
+    text-align: center;
+}
+
+#timezone-input {
+    rotate: 90deg;
+    padding-left: calc(100% - 10vh);
+}
