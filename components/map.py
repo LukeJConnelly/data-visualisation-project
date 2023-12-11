@@ -14,7 +14,18 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
     grouped_flight_data_from = pd.merge(grouped_flight_data_counts, airport_data, left_on='from_airport_code', right_on='IATA Code')
     grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
     grouped_flight_data = pd.merge(grouped_flight_data_from, grouped_flight_data_to, on=['from_airport_code', 'dest_airport_code', 'count'], suffixes=('_from', '_to')).drop(['IATA Code_from', 'IATA Code_to'], axis=1)
-
+    
+    # FLIGHTS
+    fig.add_trace(go.Scattermapbox(
+        mode="lines",
+        lat=np.array(original_grouped_flight_data[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
+        lon=np.array(original_grouped_flight_data[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
+        line=dict(width=1, color='gray'),
+        name="Flights",
+        opacity=0.05,
+    ))
+    
+    
     # FLIGHTS
     fig.add_trace(go.Scattermapbox(
         mode="lines",

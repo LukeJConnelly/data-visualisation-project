@@ -1,6 +1,6 @@
 from dash import Dash, html, callback_context, no_update
 from dash.dependencies import Input, Output
-from components.col_chart import get_histogram_price, get_histogram_country
+from components.col_chart import get_histogram_price, get_histogram_country, get_histogram_duration, get_histogram_co2
 from components.map import get_map
 from components.matrix import get_matrix
 from components.table import get_table, get_table_data, get_table_header_styling
@@ -44,8 +44,11 @@ app.layout = html.Div([
                 dbc.Col(get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY), width=6),
                 dbc.Col(get_days_of_week_hist(flight_data, time_column_suffix), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
+                dbc.Col(get_histogram_co2(flight_data), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
+                dbc.Col(get_histogram_duration(flight_data), width=3),
+                dbc.Col(get_histogram_co2(flight_data), width=3)
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
