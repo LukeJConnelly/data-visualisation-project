@@ -52,13 +52,13 @@ def convert_duration_to_hours(duration_str):
     match = re.search(regex_pattern, duration_str)
     if match:
         days = match.group(1)
-        hours = match.group(2) if match.group(2) else "00"
-        minutes = match.group(3) if match.group(3) else "00"
-        seconds = match.group(4) if match.group(4) else "00"
+        hours = match.group(2) if match.group(2) else 0
+        minutes = match.group(3) if match.group(3) else 0
+        seconds = match.group(4) if match.group(4) else 0
     else:
         print("Pattern not found in the string.")
 
-    return days * 24 * 60 + hours * 60 + minutes
+    return int(days) * 24 * 60 + int(hours) * 60 + int(minutes)
 
 def get_histogram_duration(flight_data):
     flight_data["duration_minutes"] = flight_data["duration"].apply(convert_duration_to_hours)
