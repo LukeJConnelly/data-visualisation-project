@@ -20,7 +20,7 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: flight data, airport data 
     """
-    LATEST_VERSION = 1.0
+    LATEST_VERSION = 2.0
     version_stored = None
         
     clean_flight_df_exist = os.path.exists("data/clean_flights.csv")
