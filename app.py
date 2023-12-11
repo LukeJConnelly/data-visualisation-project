@@ -48,7 +48,6 @@ app.layout = html.Div([
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
                 dbc.Col(get_histogram_duration(flight_data), width=3),
-                dbc.Col(get_histogram_co2(flight_data), width=3)
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
