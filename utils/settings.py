@@ -1,4 +1,4 @@
-to_and_from_colour = [("#1a9641", "#d7191c"), ("#E66100", "#5D3A9B")]
+to_and_from_colour = [("#1a9641", "#d7191c"), ("#1b9e77", "#d95f02")]
 
 colour_blind_mode = False
 
@@ -8,3 +8,9 @@ def get_colours():
 def set_colour_blind_mode(mode):
     global colour_blind_mode
     colour_blind_mode = mode
+
+default_chart_height = "19vh"
+
+default_bg_color = "#D4DADC"
+
+get_neutral_colour = lambda: "#7570b3"

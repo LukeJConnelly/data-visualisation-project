@@ -3,13 +3,13 @@
     /* overflow-y: hidden; */
     white-space: nowrap;
     display: block;
-    max-height: 18vh;
+    max-height: 22vh;
 }
 
 #graph-container > [class^="col-"] {
     display: inline-block;
     float: none;
-    max-height: 15vh;
+    max-height: 19vh;
 }
 
 #graph-container::-webkit-scrollbar {
@@ -24,7 +24,7 @@
 
 #graph-container::-webkit-scrollbar-thumb {
     border-radius: 8px;
-    background-color: #9ab6e6;
+    background-color: #7570b3;
 }
 
 #map-container {
@@ -41,19 +41,20 @@
     color: white !important;
     padding-right: 10px;
     margin: auto;
+    padding-left: 10px;
+    border-left: 1px solid white;
+    margin-left: 10px;
+}
+
+.nav-item {
+    color: white;
 }
 
 #colorblind-mode-input {
     margin: auto;
 }
 
-#timezone-input-container {
-    padding-top: 2vh;
-    max-height: 12vh;
-    text-align: center;
-}
-
 #timezone-input {
-    rotate: 90deg;
-    padding-left: calc(100% - 10vh);
+    margin: auto;
+    padding-left: 10px;
 }

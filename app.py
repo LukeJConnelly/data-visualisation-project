@@ -30,15 +30,15 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = html.Div([
     dbc.NavbarSimple(brand='FlightVis', brand_href='#', color='dark', dark=True, 
-                     children=[dbc.NavItem(dbc.Label("Colourblind mode", class_name="colourblind-label")), 
+                     children=[dbc.NavItem(dbc.Label("Use Local times")), 
+                               dbc.NavItem(html.Div(dbc.Checklist(options=[{"label": "", "value": 1}],
+                                                value=[0],id="timezone-input",switch=True))),
+                               dbc.NavItem(dbc.Label("Use GMT times")),
+                               dbc.NavItem(dbc.Label("Colourblind mode", class_name="colourblind-label")), 
                                dbc.NavItem(dbc.Checklist(options=[{"label": "", "value": 1}],
                                                          value=[0],id="colorblind-mode-input",switch=True))]),
     dbc.Row(id='graph-container', 
             children=[
-                dbc.Col(children=[dbc.Label("Local time"), 
-                                  html.Div(dbc.Checklist(options=[{"label": "", "value": 1}],
-                                                value=[0],id="timezone-input",switch=True)),
-                                  dbc.Label("GMT time")], id="timezone-input-container", width=1, style={'vertical-align': 'top'}),
                 dbc.Col(get_time_bar(flight_data, time_column_suffix, is_from=True), width=1),
                 dbc.Col(get_time_bar(flight_data, time_column_suffix, is_from=False), width=1),
                 dbc.Col(get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY), width=6),
