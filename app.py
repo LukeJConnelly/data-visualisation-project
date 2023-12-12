@@ -45,8 +45,8 @@ app.layout = html.Div([
                 dbc.Col(get_days_of_week_hist(flight_data, time_column_suffix), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
                 dbc.Col(get_histogram_co2(flight_data), width=3),
-                dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
-                dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
+                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=True), width=3),
+                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=False), width=3),
                 dbc.Col(get_histogram_duration(flight_data), width=3),
                 dbc.Col(get_histogram_airline(flight_data), width=3)
             ],
@@ -74,6 +74,8 @@ app.layout = html.Div([
     Output('time-bar-from', 'figure'),
     Output('time-bar-to', 'figure'),
     Output('days-of-week-hist', 'figure'),
+    Output('country-hist-from', 'figure'),
+    Output('country-hist-to', 'figure'),
     Output('table', 'data'),
     Output('table', 'style_header_conditional'),
     Output('legend', 'children'),
@@ -128,6 +130,8 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_time_bar(flight_data, time_column_suffix, is_from=True).figure,
         get_time_bar(flight_data, time_column_suffix, is_from=False).figure,
         get_days_of_week_hist(flight_data, time_column_suffix).figure,
+        get_histogram_country(flight_data, airport_data, get_colours(), is_from=True).figure,
+        get_histogram_country(flight_data, airport_data, get_colours(), is_from=False).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
         get_legend(*get_colours())

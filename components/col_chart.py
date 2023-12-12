@@ -84,7 +84,10 @@ def get_histogram_duration(flight_data):
         )
         
 
-def get_histogram_country(flight_data, airport_data, is_from=True):
+def get_histogram_country(flight_data, airport_data, colour_tuple, is_from=True):
+    """
+    colour_tuple is (to_colour, from_colour)
+    """
     flight_df = get_flight_df_with_country(flight_data, airport_data)
 
     return dcc.Graph(
@@ -99,7 +102,7 @@ def get_histogram_country(flight_data, airport_data, is_from=True):
                          xaxis_title=None,
                          margin=dict(t=0, b=0, l=0, r=0))
                      .update_traces(
-                         marker={"color": get_colours()[is_from]},
+                         marker={"color": colour_tuple[is_from]},
                      ),
             style={"height": default_chart_height}
         )
