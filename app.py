@@ -1,6 +1,6 @@
 from dash import Dash, html, callback_context, no_update
 from dash.dependencies import Input, Output
-from components.col_chart import get_histogram_price, get_histogram_country, get_histogram_duration, get_histogram_co2
+from components.col_chart import get_histogram_price, get_histogram_country, get_histogram_duration, get_histogram_co2, get_histogram_airline
 from components.map import get_map
 from components.matrix import get_matrix
 from components.table import get_table, get_table_data, get_table_header_styling
@@ -48,6 +48,7 @@ app.layout = html.Div([
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=True), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, is_from=False), width=3),
                 dbc.Col(get_histogram_duration(flight_data), width=3),
+                dbc.Col(get_histogram_airline(flight_data), width=3)
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',

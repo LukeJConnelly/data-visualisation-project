@@ -1,13 +1,10 @@
-import re
-import datetime
 from dash import dcc
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
 from utils.settings import get_colours, default_chart_height, get_neutral_colour, default_bg_color
 
 from utils.airport_country_mapping import get_flight_df_with_country
+from utils.time import convert_duration_to_hours
+import plotly.express as px
 
 def get_bar_chart(flight_data):
     return dcc.Graph(
@@ -42,7 +39,7 @@ def get_histogram_price(flight_data):
 def get_histogram_co2(flight_data):
     return dcc.Graph(
             id='co2-hist',
-            figure=px.histogram(flight_data, x="co2_percentage")
+            figure=px.histogram(flight_data, x="co2_percentage", title="CO2 percentage",)
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
@@ -50,24 +47,17 @@ def get_histogram_co2(flight_data):
                          yaxis={"fixedrange": True, "visible": False},
                          yaxis_title=None,
                          xaxis_title=None,
-                         margin=dict(t=0, b=0, l=0, r=0)),
+                         title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
+                         title_font_family="Segoe UI Semibold",
+                         hoverlabel=dict(font_family="Segoe UI"),
+                         font_family="Segoe UI",
+                         plot_bgcolor=default_bg_color,
+                         margin=dict(t=0, b=0, l=0, r=0))
+                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights"),
+            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d",],
+                                "displaylogo": False,},
             style={"height": default_chart_height}
         )
-
-def convert_duration_to_hours(duration_str):
-    # Regular expression to extract days, and optionally hours, minutes, and seconds
-    regex_pattern = r"(\d+)\s*days(?:\s*(\d+):(\d+):(\d+))?"
-
-    match = re.search(regex_pattern, duration_str)
-    if match:
-        days = match.group(1)
-        hours = match.group(2) if match.group(2) else 0
-        minutes = match.group(3) if match.group(3) else 0
-        seconds = match.group(4) if match.group(4) else 0
-    else:
-        print("Pattern not found in the string.")
-
-    return int(days) * 24 * 60 + int(hours) * 60 + int(minutes)
 
 def get_histogram_duration(flight_data):
     flight_data["duration_minutes"] = flight_data["duration"].apply(convert_duration_to_hours)
@@ -113,3 +103,30 @@ def get_histogram_country(flight_data, airport_data, is_from=True):
                      ),
             style={"height": default_chart_height}
         )
+
+def get_histogram_airline(flight_data):
+    # Flattening the airline_name column if it contains lists
+    flat_airline_data = flight_data.explode('airline_name')
+    
+    fig = px.histogram(flat_airline_data, x="airline_name", title="Airlines",)
+    fig.update_layout(
+        dragmode="select",
+        selectdirection="h",
+        xaxis={"fixedrange": True},
+        yaxis={"fixedrange": True, "visible": False},
+        yaxis_title=None,
+        xaxis_title=None,
+        title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
+        title_font_family="Segoe UI Semibold",
+        hoverlabel=dict(font_family="Segoe UI"),
+        font_family="Segoe UI",
+        plot_bgcolor=default_bg_color,
+        margin=dict(t=0, b=0, l=0, r=0)
+    )
+    fig.update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights")
+
+    return dcc.Graph(
+        id='airline-hist',
+        figure=fig,
+        style={"height": default_chart_height}
+    )
