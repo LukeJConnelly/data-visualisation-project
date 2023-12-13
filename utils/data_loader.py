@@ -20,7 +20,7 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: flight data, airport data 
     """
-    LATEST_VERSION = 2.0
+    LATEST_VERSION = 4.0
     version_stored = None
         
     clean_flight_df_exist = os.path.exists("data/clean_flights.csv")
@@ -81,6 +81,7 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
 
     # add degree to airport
     clean_airport_df = data_preprocessing.add_airport_degree(clean_airport_df, clean_flight_df)
+    clean_airport_df = data_preprocessing.add_airport_continent(clean_airport_df)
     clean_flight_df['departure_time_gmt'] = data_preprocessing.get_gmt_time(clean_flight_df['departure_time'], clean_flight_df['from_airport_code'], clean_airport_df)
     clean_flight_df['arrival_time_gmt'] = data_preprocessing.get_gmt_time(clean_flight_df['arrival_time'], clean_flight_df['dest_airport_code'], clean_airport_df)
 

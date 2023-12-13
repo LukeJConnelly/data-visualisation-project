@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from utils.timezone import get_timezone_from_IATA
 from tqdm import tqdm
 import pytz
 
-# import data_loader
+from utils.timezone import get_timezone_from_IATA
+from utils.continent import get_continent_from_coordinates
 
 #######################################################
 def split_and_clean_column(df, column_name, seperator='|', remove_head=0, remove_tail=None):
@@ -159,14 +159,14 @@ def add_airport_degree(airport_data, flight_data):
     airport_data["flights out"] = deg_out
     airport_data["flight_degree"] = [max(0,deg_in+deg_out) for deg_in, deg_out in zip(deg_in, deg_out)]
     return airport_data
+
+def add_airport_continent(airport_df):
+    airport_df['Continent'] = airport_df.apply(lambda row: get_continent_from_coordinates(row["Latitude Decimal Degrees"], row["Longitude Decimal Degrees"]), axis=1)
+    return airport_df
+
 #######################################################
 def add_manual_airport_data(airport_df):
     missing_data = {
-        "LHR": {
-            "Latitude Decimal Degrees": 51.470,
-            "Longitude Decimal Degrees": -0.454,
-            "Country": "UNITED KINGDOM"
-        },
         "NBO": {
             "Latitude Decimal Degrees": -1.333,
             "Longitude Decimal Degrees": 36.927,
@@ -196,6 +196,16 @@ def add_manual_airport_data(airport_df):
             "Latitude Decimal Degrees": 55.408,
             "Longitude Decimal Degrees": 37.906,
             "Country": "RUSSIA"
+        },
+        "LHR": {
+            "Latitude Decimal Degrees": 51.470,
+            "Longitude Decimal Degrees": -0.454,
+            "Country": "UNITED KINGDOM"
+        },
+        "MNL": {
+            "Latitude Decimal Degrees": 14.509,
+            "Longitude Decimal Degrees": 121.019,
+            "Country": "PHILIPPINES"
         }
     }
     
@@ -207,6 +217,14 @@ def add_manual_airport_data(airport_df):
 
         for name, val in missing_data.items():
             airport_df.at[index, name] = val
+    return airport_df
+
+def remove_duplicate_airport(airport_df):
+    """
+    Duplicate airports are removed and the correct is added manually 
+    """
+    airport_df = airport_df[airport_df["IATA Code"] != "MNL"]
+    airport_df = airport_df[airport_df["IATA Code"] != "LHR"]
     return airport_df
 
 # def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
@@ -225,6 +243,7 @@ def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "C
     if (len(wanted_cols) > 0):
         airport_df = airport_df[wanted_cols]
 
+    airport_df = remove_duplicate_airport(airport_df)
     airport_df = add_manual_airport_data(airport_df)
 
     # Get only relevant airports 

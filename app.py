@@ -1,5 +1,6 @@
 from dash import Dash, html, callback_context, no_update
 from dash.dependencies import Input, Output
+from dash import dcc
 from components.col_chart import get_histogram_price, get_histogram_country, get_histogram_duration, get_histogram_co2, get_histogram_airline
 from components.map import get_map
 from components.matrix import get_matrix
@@ -61,8 +62,11 @@ app.layout = html.Div([
             className='m-2'),
     dbc.Row(id='table-container', 
             children=[
+
                 #get_histogram_price(flight_data),
-                        get_matrix(flight_data, airport_data) if not SAMPLE_MODE else None,
+                        dbc.Label("Matrix airport sort by:"),
+                        dcc.Dropdown(['IATA Code', 'Country', 'Continent'], 'IATA Code', id='matrix-dropdown'),
+                        get_matrix(flight_data, airport_data, sort_by="IATA Code") if not SAMPLE_MODE else None,
                         get_table(flight_data, airport_data),
             ], 
             className='m-2'),
@@ -84,6 +88,7 @@ app.layout = html.Div([
     Output('table', 'data'),
     Output('table', 'style_header_conditional'),
     Output('legend', 'children'),
+    Output('matrix', 'figure')
 ],[
     Input('flight-map-from', 'selectedData'),
     Input('flight-map-to', 'selectedData'),
@@ -96,8 +101,9 @@ app.layout = html.Div([
     Input('co2-hist', 'selectedData'),
     Input("timezone-input", "value"),
     Input("colorblind-mode-input", "value"),
+    Input('matrix-dropdown', 'value')
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, timezone_mode, colourblind_mode):
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, timezone_mode, colourblind_mode, matrix_sorting_str):
     
     # hacky fix for double histogram callbacking
     if (callback_context.triggered[0]['prop_id'] == 'days-of-week-hist.selectedData' and days and not days['points']):
@@ -160,7 +166,8 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_histogram_country(flight_data, airport_data, get_colours(), is_from=False).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
-        get_legend(*get_colours())
+        get_legend(*get_colours()),
+        get_matrix(ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA, sort_by=matrix_sorting_str).figure
     ]
     
     return output_graphs
