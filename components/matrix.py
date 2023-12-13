@@ -78,7 +78,7 @@ def get_matrix(flight_data, airport_data,sort_by="Country"):
         yaxis=dict(showgrid=False),
         plot_bgcolor=default_bg_color
     ).update_traces(
-        hovertemplate="%{y} -> %{x} : %{z} flights",
+        hovertemplate="%{y} -> %{x} : %{z:.1d} flights",
     )
 
 
