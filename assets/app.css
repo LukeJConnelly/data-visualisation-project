@@ -58,3 +58,7 @@
     margin: auto;
     padding-left: 10px;
 }
+
+#price-hist .axistext, #co2-hist .axistext, #duration-hist .axistext {
+    display: none;
+}

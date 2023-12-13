@@ -36,7 +36,7 @@ def get_table(flight_data, airport_data):
             style_cell=dict(textAlign='left'),
             cell_selectable=False,
             style_header_conditional=get_table_header_styling(),
-            style_header=dict(backgroundColor="#7570b3", border='none', color='white', font_family='Segoe UI', fontWeight='bold', padding='0px 10px'),
+            style_header=dict(backgroundColor="#7570b3", border='none', color='white', font_family='Segoe UI Semibold', padding='0px 10px'),
             style_cell_conditional=[
                 {
                     'if': {'column_id': '# of flights'},

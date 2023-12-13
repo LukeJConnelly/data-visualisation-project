@@ -8,6 +8,7 @@ from components.time_picker import get_time_bar, get_date_hist, get_days_of_week
 from components.legend import get_legend
 import dash_bootstrap_components as dbc
 import pandas as pd
+from functools import reduce
 from utils.settings import get_colours, set_colour_blind_mode
 
 from utils import data_loader
@@ -44,11 +45,11 @@ app.layout = html.Div([
                 dbc.Col(get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY), width=6),
                 dbc.Col(get_days_of_week_hist(flight_data, time_column_suffix), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
-                dbc.Col(get_histogram_co2(flight_data), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=True), width=3),
                 dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=False), width=3),
                 dbc.Col(get_histogram_duration(flight_data), width=3),
-                dbc.Col(get_histogram_airline(flight_data), width=3)
+                dbc.Col(get_histogram_co2(flight_data), width=3),
+                dbc.Col(get_histogram_airline(flight_data), width=12),
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
@@ -60,10 +61,11 @@ app.layout = html.Div([
             className='m-2'),
     dbc.Row(id='table-container', 
             children=[
-                        get_matrix(flight_data, airport_data),
+                #get_histogram_price(flight_data),
+                        get_matrix(flight_data, airport_data) if not SAMPLE_MODE else None,
                         get_table(flight_data, airport_data),
             ], 
-            className='m-2')
+            className='m-2'),
 ])
 
 # If you are going to filter flight_data in any way, use this function here
@@ -74,6 +76,9 @@ app.layout = html.Div([
     Output('time-bar-from', 'figure'),
     Output('time-bar-to', 'figure'),
     Output('days-of-week-hist', 'figure'),
+    Output('price-hist', 'figure'),
+    Output('duration-hist', 'figure'),
+    Output('co2-hist', 'figure'),
     Output('country-hist-from', 'figure'),
     Output('country-hist-to', 'figure'),
     Output('table', 'data'),
@@ -86,15 +91,24 @@ app.layout = html.Div([
     Input('time-bar-from', 'selectedData'),
     Input('time-bar-to', 'selectedData'),
     Input('days-of-week-hist', 'selectedData'),
+    Input('price-hist', 'selectedData'),
+    Input('duration-hist', 'selectedData'),
+    Input('co2-hist', 'selectedData'),
     Input("timezone-input", "value"),
     Input("colorblind-mode-input", "value"),
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, timezone_mode, colourblind_mode):
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, timezone_mode, colourblind_mode):
     
     # hacky fix for double histogram callbacking
     if (callback_context.triggered[0]['prop_id'] == 'days-of-week-hist.selectedData' and days and not days['points']):
         return no_update
     elif (callback_context.triggered[0]['prop_id'] == 'date-hist.selectedData' and dates and not dates['points']):
+        return no_update
+    elif (callback_context.triggered[0]['prop_id'] == 'price-hist.selectedData' and prices and not prices['points']):
+        return no_update
+    elif (callback_context.triggered[0]['prop_id'] == 'duration-hist.selectedData' and durations and not durations['points']):
+        return no_update
+    elif (callback_context.triggered[0]['prop_id'] == 'co2-hist.selectedData' and co2s and not co2s['points']):
         return no_update
     
     set_colour_blind_mode(colourblind_mode[-1] == 1)
@@ -123,6 +137,15 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
     if days and days['points']:
         flight_data = flight_data.loc[flight_data.apply(lambda x: x['departure_time'+time_column_suffix].weekday() in [d['x'] for d in days['points']], axis=1)]
 
+    if prices and prices['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: prices['range']['x'][0] < x['price'] and x['price'] < prices['range']['x'][1], axis=1)]
+
+    if durations and durations['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: durations['range']['x'][0] < x['duration_minutes'] and x['duration_minutes'] < durations['range']['x'][1], axis=1)]
+
+    if co2s and co2s['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: co2s['range']['x'][0] < x['co2_emissions'] and x['co2_emissions'] < co2s['range']['x'][1], axis=1)]
+
     output_graphs = [
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True).figure,
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False).figure,
@@ -130,6 +153,9 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_time_bar(flight_data, time_column_suffix, is_from=True).figure,
         get_time_bar(flight_data, time_column_suffix, is_from=False).figure,
         get_days_of_week_hist(flight_data, time_column_suffix).figure,
+        get_histogram_price(flight_data).figure,
+        get_histogram_duration(flight_data).figure,
+        get_histogram_co2(flight_data).figure,
         get_histogram_country(flight_data, airport_data, get_colours(), is_from=True).figure,
         get_histogram_country(flight_data, airport_data, get_colours(), is_from=False).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),

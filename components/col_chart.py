@@ -13,9 +13,10 @@ def get_bar_chart(flight_data):
         )
 
 def get_histogram_price(flight_data):
+    margin = 0 * (flight_data['price'].max() - flight_data['price'].min())
     return dcc.Graph(
             id='price-hist',
-            figure=px.histogram(flight_data['price'], x="price", title="Ticket Price (USD)", range_x=[-0.5, max(flight_data['price'])+0.5])
+            figure=px.histogram(flight_data['price'], x="price", title="Ticket Price (USD)", nbins=20)
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
@@ -28,18 +29,22 @@ def get_histogram_price(flight_data):
                          hoverlabel=dict(font_family="Segoe UI"),
                          font_family="Segoe UI",
                          plot_bgcolor=default_bg_color,
+                         bargap=0,
+                         hovermode="x",
                          margin=dict(t=0, b=0, l=0, r=0))
-                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights"),
-            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d",],
+                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="$%{x}<br>%{y} flights")
+                     .update_xaxes(range=[flight_data['price'].min() - margin, flight_data['price'].max() + margin]),
+            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d","lasso2d"],
                                 "displaylogo": False,},
             style={"height": default_chart_height}
         )
 
 
 def get_histogram_co2(flight_data):
+    margin = 0 * (flight_data['co2_emissions'].max() - flight_data['co2_emissions'].min())
     return dcc.Graph(
             id='co2-hist',
-            figure=px.histogram(flight_data, x="co2_percentage", title="CO2 percentage",)
+            figure=px.histogram(flight_data, x="co2_emissions", title="CO2 Emissions", nbins=12)
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
@@ -52,20 +57,23 @@ def get_histogram_co2(flight_data):
                          hoverlabel=dict(font_family="Segoe UI"),
                          font_family="Segoe UI",
                          plot_bgcolor=default_bg_color,
+                         bargap=0,
+                         hovermode="x",
                          margin=dict(t=0, b=0, l=0, r=0))
-                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights"),
-            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d",],
+                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{x}<br>%{y} flights")
+                     .update_xaxes(range=[flight_data['co2_emissions'].min() - margin, flight_data['co2_emissions'].max() + margin]),
+            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d","lasso2d"],
                                 "displaylogo": False,},
             style={"height": default_chart_height}
-        )
+    )
 
 def get_histogram_duration(flight_data):
     flight_data["duration_minutes"] = flight_data["duration"].apply(convert_duration_to_hours)
-        
+    margin = 0 * (flight_data['duration_minutes'].max() - flight_data['duration_minutes'].min())
     
     return dcc.Graph(
             id='duration-hist',
-            figure=px.histogram(flight_data, x="duration_minutes", title="Flight Duration (minutes)", range_x=[-0.5, max(flight_data['duration_minutes'])+0.5])
+            figure=px.histogram(flight_data, x="duration_minutes", title="Flight Duration (minutes)", nbins=20)
                      .update_layout(
                          dragmode="select",
                          selectdirection="h",
@@ -78,8 +86,13 @@ def get_histogram_duration(flight_data):
                          hoverlabel=dict(font_family="Segoe UI"),
                          font_family="Segoe UI",
                          plot_bgcolor=default_bg_color,
+                         bargap=0,
+                         hovermode="x",
                          margin=dict(t=0, b=0, l=0, r=0))
-                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights"),
+                     .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{x}m<br>%{y} flights")
+                     .update_xaxes(range=[flight_data['duration_minutes'].min() - margin, flight_data['duration_minutes'].max() + margin]),
+            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d","lasso2d"],
+                                "displaylogo": False,},
             style={"height": default_chart_height}
         )
         

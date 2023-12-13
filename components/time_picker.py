@@ -23,6 +23,7 @@ def get_days_of_week_hist(flight_data, time_column_suffix):
                         .update_layout(
                             dragmode="select",
                             selectdirection="h",
+                            bargap=0,
                             xaxis={"fixedrange": True},
                             yaxis={"fixedrange": True, "visible": False},
                             yaxis_title=None,
@@ -53,6 +54,7 @@ def get_date_hist(flight_data, time_column_suffix, start_date, end_date):
                      px.histogram(date_options, x="value", y="count", nbins=num_days, range_x=[start_date, end_date], title="Flights by Date")
                      .update_layout(
                          dragmode="select",
+                         bargap=0,
                          selectdirection="h",
                          yaxis={"fixedrange": True, "visible": False},
                          yaxis_title=None,
