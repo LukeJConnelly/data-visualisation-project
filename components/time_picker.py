@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from utils.settings import get_colours, default_chart_height, default_bg_color, get_neutral_colour
+from utils.settings import get_colours, default_chart_height, default_bg_color, get_neutral_colour, neutral_colour_hover, get_colours_hover
 
 def get_date_data(flight_data, time_column):
     return flight_data[time_column].apply(lambda x: x.date()).value_counts().reset_index().rename(columns={time_column: "value"})
@@ -17,20 +17,20 @@ def get_days_of_week_hist(flight_data, time_column_suffix):
     return dcc.Graph(id="days-of-week-hist",
                         figure=go.Figure(
                         px.histogram(day_options, x="value", y="count", nbins=7, 
-                                     range_x=[-0.5, 6.5], title="Flights by Weekday", text_auto=True)
+                                     range_x=[-0.5, 6.5], title="Flights Days")
                         .update_xaxes(tickvals=[0, 1, 2, 3, 4, 5, 6], ticktext=['M', 'T', 'W', 'T', 'F', 'S', 'S'])
-                        .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights", texttemplate= '%{y:.3s}')
+                        .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights")
                         .update_layout(
                             dragmode="select",
                             selectdirection="h",
                             bargap=0,
                             xaxis={"fixedrange": True},
-                            yaxis={"fixedrange": True, "visible": False},
+                            yaxis={"fixedrange": True},
                             yaxis_title=None,
                             xaxis_title=None,
                             title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
                             title_font_family="Segoe UI Semibold",
-                            hoverlabel=dict(font_family="Segoe UI"),
+                            hoverlabel=dict(font_family="Segoe UI", bgcolor=neutral_colour_hover),
                             font_family="Segoe UI",
                             plot_bgcolor=default_bg_color,
                             margin=dict(t=0, b=0, l=0, r=0),)),
@@ -51,12 +51,12 @@ def get_date_hist(flight_data, time_column_suffix, start_date, end_date):
     date_options = get_date_data(flight_data, 'departure_time' + time_column_suffix)
     return dcc.Graph(id="date-hist",
                      figure=go.Figure(
-                     px.histogram(date_options, x="value", y="count", nbins=num_days, range_x=[start_date, end_date], title="Flights by Date")
+                     px.histogram(date_options, x="value", y="count", nbins=num_days, range_x=[start_date, end_date], title="Flights Dates")
                      .update_layout(
                          dragmode="select",
                          bargap=0,
                          selectdirection="h",
-                         yaxis={"fixedrange": True, "visible": False},
+                         yaxis={"fixedrange": True},
                          yaxis_title=None,
                          xaxis_title=None,
                          xaxis=dict(
@@ -67,7 +67,7 @@ def get_date_hist(flight_data, time_column_suffix, start_date, end_date):
                         ),
                          title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
                          title_font_family="Segoe UI Semibold",
-                         hoverlabel=dict(font_family="Segoe UI"),
+                         hoverlabel=dict(font_family="Segoe UI", bgcolor=neutral_colour_hover),
                          font_family="Segoe UI",
                          plot_bgcolor=default_bg_color,
                          margin=dict(t=0, b=0, l=0, r=0))
@@ -92,7 +92,7 @@ def get_time_bar(flight_data, time_column_suffix, is_from=True):
                         title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
                         title_font_family="Segoe UI Semibold",
                         font_family="Segoe UI",
-                        hoverlabel=dict(font_family="Segoe UI"),
+                        hoverlabel=dict(font_family="Segoe UI", bgcolor=get_colours_hover()[is_from])
                     )
                     .update_traces(
                         marker={"color": get_colours()[is_from]},
