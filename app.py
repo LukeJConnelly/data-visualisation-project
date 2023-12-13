@@ -10,6 +10,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from functools import reduce
 from utils.settings import get_colours, set_colour_blind_mode
+from utils.airport_country_mapping import get_flight_df_with_country
 
 from utils import data_loader
 
@@ -17,7 +18,7 @@ SAMPLE_MODE = False
 
 print("Loading data...")
 ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA = data_loader.load_data(SAMPLE_MODE)
-flight_data, airport_data = ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA
+flight_data, airport_data = get_flight_df_with_country(ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA), ORIGINAL_AIRPORT_DATA
 grouped_flight_data_counts = flight_data.groupby(['from_airport_code', 'dest_airport_code']).size().reset_index(name='count')
 grouped_flight_data_from = pd.merge(grouped_flight_data_counts, airport_data, left_on='from_airport_code', right_on='IATA Code')
 grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
@@ -45,11 +46,11 @@ app.layout = html.Div([
                 dbc.Col(get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY), width=6),
                 dbc.Col(get_days_of_week_hist(flight_data, time_column_suffix), width=2),
                 dbc.Col(get_histogram_price(flight_data), width=3),
-                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=True), width=3),
-                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=False), width=3),
+                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=True), width=4),
+                dbc.Col(get_histogram_country(flight_data, airport_data, get_colours(), is_from=False), width=4),
                 dbc.Col(get_histogram_duration(flight_data), width=3),
                 dbc.Col(get_histogram_co2(flight_data), width=3),
-                dbc.Col(get_histogram_airline(flight_data), width=12),
+                dbc.Col(get_histogram_airline(flight_data), width=4),
             ],
             className='m-2 p-1'),
     dbc.Row(id='map-container',
@@ -81,6 +82,7 @@ app.layout = html.Div([
     Output('co2-hist', 'figure'),
     Output('country-hist-from', 'figure'),
     Output('country-hist-to', 'figure'),
+    Output('airline-hist', 'figure'),
     Output('table', 'data'),
     Output('table', 'style_header_conditional'),
     Output('legend', 'children'),
@@ -94,11 +96,14 @@ app.layout = html.Div([
     Input('price-hist', 'selectedData'),
     Input('duration-hist', 'selectedData'),
     Input('co2-hist', 'selectedData'),
+    Input('airline-hist', 'clickData'),
+    Input('country-hist-from', 'clickData'),
+    Input('country-hist-to', 'clickData'),
     Input("timezone-input", "value"),
     Input("colorblind-mode-input", "value"),
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, timezone_mode, colourblind_mode):
-    
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, airline, country_from, country_to, timezone_mode, colourblind_mode):
+
     # hacky fix for double histogram callbacking
     if (callback_context.triggered[0]['prop_id'] == 'days-of-week-hist.selectedData' and days and not days['points']):
         return no_update
@@ -146,6 +151,17 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
     if co2s and co2s['points']:
         flight_data = flight_data.loc[flight_data.apply(lambda x: co2s['range']['x'][0] < x['co2_emissions'] and x['co2_emissions'] < co2s['range']['x'][1], axis=1)]
 
+    if airline and airline['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: airline['points'][0]['x'] in x['airline_name'], axis=1)]
+
+    flight_data = get_flight_df_with_country(flight_data, airport_data)
+
+    if country_from and country_from['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: country_from['points'][0]['x'] == x['from_country'], axis=1)]
+
+    if country_to and country_to['points']:
+        flight_data = flight_data.loc[flight_data.apply(lambda x: country_to['points'][0]['x'] == x['dest_country'], axis=1)]
+
     output_graphs = [
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True).figure,
         get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False).figure,
@@ -158,6 +174,7 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_histogram_co2(flight_data).figure,
         get_histogram_country(flight_data, airport_data, get_colours(), is_from=True).figure,
         get_histogram_country(flight_data, airport_data, get_colours(), is_from=False).figure,
+        get_histogram_airline(flight_data).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
         get_legend(*get_colours())

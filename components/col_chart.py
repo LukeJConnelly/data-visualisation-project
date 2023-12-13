@@ -97,52 +97,70 @@ def get_histogram_duration(flight_data):
         )
         
 
-def get_histogram_country(flight_data, airport_data, colour_tuple, is_from=True):
+def get_histogram_country(flight_df, airport_data, colour_tuple, is_from=True):
     """
     colour_tuple is (to_colour, from_colour)
     """
-    flight_df = get_flight_df_with_country(flight_data, airport_data)
-
+    vals = flight_df["from_country" if is_from else "dest_country"].value_counts().index.tolist()
     return dcc.Graph(
             id='country-hist'+ ("-from" if is_from else "-to"),
-            figure=px.histogram(flight_df, x="from_country" if is_from else "dest_country")
+            figure=px.histogram(flight_df, x="from_country" if is_from else "dest_country", text_auto=True, title=f'{"Arrival" if not is_from else "Departure"} Countries')
                      .update_layout(
-                         dragmode="select",
-                         selectdirection="h",
-                         xaxis={"fixedrange": True},
-                         yaxis={"fixedrange": True, "visible": False},
-                         yaxis_title=None,
-                         xaxis_title=None,
-                         margin=dict(t=0, b=0, l=0, r=0))
+                        dragmode="pan",
+                        xaxis={'categoryorder': 'total descending', 'range': [-0.5, 10.5 if len(vals) >= 10 else len(vals) - 0.5], 
+                                'tickvals': list(range(len(vals))),
+                                'ticktext': [(x) if len(str(x)) < 10 else str(x)[:8] + '...' for x in vals]},
+                        yaxis={"fixedrange": True, "visible": False},           
+                        yaxis_title=None,
+                        xaxis_title=None,
+                        title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
+                        title_font_family="Segoe UI Semibold",
+                        hoverlabel=dict(font_family="Segoe UI"),
+                        font_family="Segoe UI",
+                        hovermode="x",
+                        plot_bgcolor=default_bg_color,
+                        margin=dict(t=0, b=0, l=0, r=0))
                      .update_traces(
-                         marker={"color": colour_tuple[is_from]},
+                      marker={"color": colour_tuple[is_from]},
+                      customdata=vals, 
+                      hovertemplate="%{customdata}<br>%{y} flights",
+                      texttemplate= '%{y:.3s}'
                      ),
+            config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d","lasso2d", "select2d"],
+                                "displaylogo": False,},
             style={"height": default_chart_height}
         )
 
 def get_histogram_airline(flight_data):
     # Flattening the airline_name column if it contains lists
     flat_airline_data = flight_data.explode('airline_name')
-    
-    fig = px.histogram(flat_airline_data, x="airline_name", title="Airlines",)
+    vals = flat_airline_data['airline_name'].value_counts().index.tolist()
+    fig = px.histogram(flat_airline_data, x="airline_name", title="Airlines", text_auto=True)
     fig.update_layout(
-        dragmode="select",
-        selectdirection="h",
-        xaxis={"fixedrange": True},
+        xaxis={'categoryorder': 'total descending', 'range': [-0.5, 10.5 if len(vals) >= 10 else len(vals) + 0.5], 
+               'tickvals': list(range(len(vals))),
+               'ticktext': [(x) if len(str(x)) < 10 else str(x)[:8] + '...' for x in vals]},
         yaxis={"fixedrange": True, "visible": False},
+        dragmode="pan",
         yaxis_title=None,
         xaxis_title=None,
         title=dict(font=dict(size=15, color="black"), automargin=True, x=0.5),
         title_font_family="Segoe UI Semibold",
         hoverlabel=dict(font_family="Segoe UI"),
         font_family="Segoe UI",
+        hovermode="x",
         plot_bgcolor=default_bg_color,
         margin=dict(t=0, b=0, l=0, r=0)
     )
-    fig.update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights")
+    fig.update_traces(marker_color=get_neutral_colour(), 
+                      customdata=vals, 
+                      hovertemplate="%{customdata}<br>%{y} flights", 
+                      texttemplate= '%{y:.3s}')
 
     return dcc.Graph(
         id='airline-hist',
         figure=fig,
+        config={"modeBarButtonsToRemove": ["zoomIn2d", "zoomOut2d", "pan2d", "zoom2d", "autoScale2d", "resetScale2d","lasso2d", "select2d"],
+                                "displaylogo": False,},
         style={"height": default_chart_height}
     )

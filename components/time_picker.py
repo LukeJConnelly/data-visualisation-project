@@ -17,9 +17,9 @@ def get_days_of_week_hist(flight_data, time_column_suffix):
     return dcc.Graph(id="days-of-week-hist",
                         figure=go.Figure(
                         px.histogram(day_options, x="value", y="count", nbins=7, 
-                                     range_x=[-0.5, 6.5], title="Flights by Weekday")
+                                     range_x=[-0.5, 6.5], title="Flights by Weekday", text_auto=True)
                         .update_xaxes(tickvals=[0, 1, 2, 3, 4, 5, 6], ticktext=['M', 'T', 'W', 'T', 'F', 'S', 'S'])
-                        .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights")
+                        .update_traces(marker_color=get_neutral_colour(), hovertemplate="%{y} flights", texttemplate= '%{y:.3s}')
                         .update_layout(
                             dragmode="select",
                             selectdirection="h",

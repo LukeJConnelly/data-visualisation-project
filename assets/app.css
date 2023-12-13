@@ -59,6 +59,6 @@
     padding-left: 10px;
 }
 
-#price-hist .axistext, #co2-hist .axistext, #duration-hist .axistext {
+#price-hist .axistext, #co2-hist .axistext, #duration-hist .axistext, #airline-hist .axistext, #country-hist-from .axistext, #country-hist-to .axistext {
     display: none;
 }
