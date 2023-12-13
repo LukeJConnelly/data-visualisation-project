@@ -8,7 +8,7 @@ function fixTitlePositions() {
             textElement.removeAttribute('text-anchor');
         } catch (e) {}
     });
-    setTimeout(fixTitlePositions, 300);
+    setTimeout(fixTitlePositions, 50);
 }
 
 fixTitlePositions()
