@@ -1,157 +1,87 @@
 from dash import dcc
 import plotly.graph_objects as go
-from tqdm import tqdm
-from components.country_airport_dicts import airport_to_country
+# from components.country_airport_dicts import airport_to_country
 import pandas as pd
+import numpy as np
+from utils.settings import get_colours, get_colours_hover
 
-def get_map(flight_data, airport_data, chosen_for_colouring, quantiles):
-
-    hover_texts_airports = [f"{airport} - {airport_to_country[airport]}" for airport in airport_data['IATA Code']]
-  
+def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True, show_unselected_input=False):
     fig = go.Figure()
+
+    # Join airport data to flight data
+    grouped_flight_data_counts = flight_data.groupby(['from_airport_code', 'dest_airport_code']).size().reset_index(name='count')
+    grouped_flight_data_from = pd.merge(grouped_flight_data_counts, airport_data, left_on='from_airport_code', right_on='IATA Code')
+    grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
+    grouped_flight_data = pd.merge(grouped_flight_data_from, grouped_flight_data_to, on=['from_airport_code', 'dest_airport_code', 'count'], suffixes=('_from', '_to')).drop(['IATA Code_from', 'IATA Code_to'], axis=1)
     
     # FLIGHTS
-    prev_errors = set()
+    if(show_unselected_input):
 
-    colours=['#27b300','#b3b000','#b35f00','#b30000']
+        # Calculating unselected rows
+        merged_df = pd.merge(original_grouped_flight_data, grouped_flight_data, 
+                            how='outer', 
+                            on=['from_airport_code', 'dest_airport_code', 'count'], 
+                            indicator=True)
 
-    # Option 1: Loop through and plot all together at end
-    if chosen_for_colouring != 'none':
-        lats = [[] for _ in range(len(colours))]
-        lons = [[] for _ in range(len(colours))]
-        counts=[[] for _ in range(len(colours))] 
-        mid_lats = []
-        mid_lons = []
-        hover_texts_flights = []
-        grouped_data_by_airports = flight_data.groupby(['from_airport_code', 'dest_airport_code'])
-        airports_and_colour = grouped_data_by_airports[chosen_for_colouring].mean().reset_index(name=chosen_for_colouring)
-        airports_and_counts = grouped_data_by_airports.size().reset_index(name='count')
-        grouped_flight_data = airports_and_colour.merge(airports_and_counts, on=['from_airport_code', 'dest_airport_code'])
-        for _, row in tqdm(grouped_flight_data.iterrows()):
-            try:
-                curr_quantile = 0 if row[chosen_for_colouring] < quantiles[0] else 1 if row[chosen_for_colouring] < quantiles[1] else 2 if row[chosen_for_colouring] < quantiles[2] else 3
-                lat1, lat2 = airport_data.loc[row['from_airport_code'], 'Latitude Decimal Degrees'], airport_data.loc[row['dest_airport_code'], 'Latitude Decimal Degrees']
-                lon1, lon2 = airport_data.loc[row['from_airport_code'], 'Longitude Decimal Degrees'], airport_data.loc[row['dest_airport_code'], 'Longitude Decimal Degrees']
-                lats[curr_quantile].append(lat1)
-                lats[curr_quantile].append(lat2)
-                lons[curr_quantile].append(lon1)
-                lons[curr_quantile].append(lon2)  
-                mid_lats.append((lat1+lat2)/2)
-                mid_lons.append((lon1+lon2)/2)
-                lats[curr_quantile].append(None)
-                lons[curr_quantile].append(None)
-                mid_lats.append(None)
-                mid_lons.append(None)
-                hover_texts_flights.append(f"{row['from_airport_code']} ({airport_to_country[row['from_airport_code']]}) - {row['dest_airport_code']} ({airport_to_country[row['dest_airport_code']]})")
-                counts[curr_quantile].append(row['counts'])
-            except KeyError as e:
-                prev_errors.add(e.args[0])
+        # Filter out the rows that are only in the original DataFrame
+        unselected_rows = merged_df[merged_df['_merge'] == 'left_only']
+        unselected_rows = unselected_rows.drop(columns=['_merge'])
+        unselected_rows.rename(columns=lambda x: x.rstrip('_x'), inplace=True)
 
-        # hover_texts = [f"{name} - Lat: {lat}, Lon: {lon}" for name, lat, lon in zip(airport_data.index, airport_data['Latitude Decimal Degrees'], airport_data['Longitude Decimal Degrees'])]
-
-        for i in range(len(colours)):
-            fig.add_trace(go.Scattermapbox(
-                mode="lines",
-                lat=lats[i],
-                lon=lons[i],
-                line=dict(width=1, color=colours[i]),
-                name="Flights w/ " + chosen_for_colouring + " in " + str(i+1) + ["st", "nd", "rd", "th"][i] + " quantile",
-                # text=hover_texts,
-                hoverinfo='none',
-                opacity=0.1,
-            ))
-
-        middle_node_trace = go.Scattermapbox(
-            lat=mid_lats,
-            lon=mid_lons,
-            mode='markers',
-            marker=go.Marker(
-                opacity=0
-            ),
-            hoverinfo='text',
-            text=hover_texts_flights,
-        )
-
-        fig.add_trace(middle_node_trace)
-    else:
-        lats = []
-        lons = []
-        counts=[] 
-        mid_lats = []
-        mid_lons = []
-        hover_texts_flights = []
-        grouped_flight_data = flight_data.groupby(['from_airport_code', 'dest_airport_code']).size().reset_index(name='count')
-        for _, row in tqdm(grouped_flight_data.iterrows()):
-            try:
-                lat1, lat2 = airport_data.loc[row['from_airport_code'], 'Latitude Decimal Degrees'], airport_data.loc[row['dest_airport_code'], 'Latitude Decimal Degrees']
-                lon1, lon2 = airport_data.loc[row['from_airport_code'], 'Longitude Decimal Degrees'], airport_data.loc[row['dest_airport_code'], 'Longitude Decimal Degrees']
-                lats.append(lat1)
-                lats.append(lat2)
-                lons.append(lon1)
-                lons.append(lon2)
-                lats.append(None)
-                mid_lats.append((lat1+lat2)/2)
-                mid_lons.append((lon1+lon2)/2)
-                lons.append(None)
-                hover_texts_flights.append(f"{row['from_airport_code']} ({airport_to_country[row['from_airport_code']]}) - {row['dest_airport_code']} ({airport_to_country[row['dest_airport_code']]})")
-                counts.append(row['counts'])
-            except KeyError as e:
-                prev_errors.add(e.args[0])
 
         fig.add_trace(go.Scattermapbox(
             mode="lines",
-            lat=lats,
-            lon=lons,
-            line=dict(width=1, color=colours[-1]),
+            lat=np.array(unselected_rows[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
+            lon=np.array(unselected_rows[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
+            line=dict(width=1, color='gray'),
             name="Flights",
-            hoverinfo='none',
-            opacity=0.1,
+            opacity=0.02,
         ))
         
-        middle_node_trace = go.Scattermapbox(
-            lat=mid_lats,
-            lon=mid_lons,
-            mode='markers',
-            marker=go.Marker(
-                opacity=0
-            ),
-            hoverinfo='text',
-            text=hover_texts_flights,
-        )
-
-        fig.add_trace(middle_node_trace)
-
-
-
-    fig.add_trace(go.Scattermapbox(lat=airport_data['Latitude Decimal Degrees'],
-                                lon=airport_data['Longitude Decimal Degrees'],
-                                mode='markers',
-                                marker=go.scattermapbox.Marker(size=5, color='black'),
-                                name='Airports',
-                                text=hover_texts_airports,
-                                hoverinfo='text'))
-
-
-    # Option 2: Loop through and plot each flight individually
     
-    # for i in tqdm(range(len(flight_data))):
-    #     try:
-    #         fig.add_trace(
-    #                     go.Scattermapbox(
-    #                         mode='lines',
-    #                         lat=[airport_data.loc[flight_data.iloc[i]['from_airport_code'], 'Latitude Decimal Degrees'], airport_data.loc[flight_data.iloc[i]['dest_airport_code'], 'Latitude Decimal Degrees']],
-    #                         lon=[airport_data.loc[flight_data.iloc[i]['from_airport_code'], 'Longitude Decimal Degrees'], airport_data.loc[flight_data.iloc[i]['dest_airport_code'], 'Longitude Decimal Degrees']],
-    #                         line=go.scattermapbox.Line(
-    #                             width=1,
-    #                             color="red"
-    #                         ),
-    #                         name=str(flight_data['flight_number'][i])
-    #                     )
-    #                 )
-    #     except KeyError as e:
-    #         prev_errors.add(e.args[0])
+    # FLIGHTS
+    fig.add_trace(go.Scattermapbox(
+        mode="lines",
+        lat=np.array(grouped_flight_data[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
+        lon=np.array(grouped_flight_data[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
+        line=dict(width=1, color=get_colours()[is_from]),
+        name="Flights",
+        opacity=0.1,
+    ))
 
-    
-    print("Following lookup errors occurred:", prev_errors)
-    fig.update_layout(mapbox_style='open-street-map',  margin={'r': 20, 't': 20, 'l': 0, 'b': 20})
-    return dcc.Graph(id='flight-map', figure=fig)
+    # AIRPORTS
+    total_flights = [original_grouped_flight_data[original_grouped_flight_data['from_airport_code' if is_from else 'dest_airport_code'] == code]['count'].sum() for code in airport_data['IATA Code']]
+    selected_totals = [grouped_flight_data[grouped_flight_data['from_airport_code' if is_from else 'dest_airport_code'] == code]['count'].sum() for code in airport_data['IATA Code']]
+    is_filtered_data = not all([total_flights[i] == selected_totals[i] for i in range(len(total_flights))])
+    exponent = 0.5
+    exp_max_total_flights = np.power(max(total_flights), exponent)
+    exp_min_total_flights = np.power(1, exponent)
+
+    for i, airport in airport_data.iterrows():
+        # Black circle - total flights in/out
+        fig.add_trace(go.Scattermapbox(lat=[airport['Latitude Decimal Degrees']],
+                                       lon=[airport['Longitude Decimal Degrees']],
+                                       mode='markers',
+                                       marker=go.scattermapbox.Marker(size=round((np.power(total_flights[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights) + 1, color='black'),
+                                       text=f"{airport['IATA Code']} - {airport['Country'].title() if len(airport['Country']) >= 4 else airport['Country']} - {total_flights[i]} flights",
+                                       hoverinfo='text',
+                                       hoverlabel=dict(font_family="Segoe UI", bgcolor="black"),
+                                       customdata=[airport['IATA Code']],
+                                       opacity=0.2 if is_filtered_data else 1,))
+
+    for i, airport in airport_data.iterrows():
+        # Coloured circle - flights in/out to/from selected airport (plotted in seperate loop to ensure they are on top)
+        if selected_totals[i] :
+            fig.add_trace(go.Scattermapbox(
+                mode="markers",
+                lat=[airport['Latitude Decimal Degrees']],
+                lon=[airport['Longitude Decimal Degrees']],
+                marker=dict(size=round((np.power(selected_totals[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights), color=get_colours()[is_from]),
+                name=airport['IATA Code'],
+                text=f"{airport['IATA Code']} - {airport['Country'].title() if len(airport['Country']) >= 4 else airport['Country']} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
+                hoverinfo='text',
+                hoverlabel=dict(font_family="Segoe UI", bgcolor=get_colours_hover()[is_from]),
+            ))
+
+    fig.update_layout(mapbox_style='carto-positron',  margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, mapbox_bounds={"west": -180, "east": 180, "south": -90, "north": 90})
+    return dcc.Graph(id=f'flight-map-{"from" if is_from else "to"}', figure=fig)

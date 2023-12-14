@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
+import pytz
 
-
-# import data_loader
+from utils.timezone import get_timezone_from_IATA
+from utils.continent import get_continent_from_coordinates
 
 #######################################################
 def split_and_clean_column(df, column_name, seperator='|', remove_head=0, remove_tail=None):
@@ -53,14 +55,14 @@ def clean_co2(data):
     '''
     # scaling the co2_emissions column
     scaler = MinMaxScaler()
-    data['co2_emissions'] = scaler.fit_transform(data[['co2_emissions']])
+    data.loc[:, 'co2_emissions'] = scaler.fit_transform(data[['co2_emissions']])
 
     # calculating and inserting avg c02 emissions for each route
     groups = data.groupby(["from_airport_code", "dest_airport_code"])["co2_emissions"].mean()
-    data['avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
+    data.loc[:, 'avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
 
     # calculating and inserting difference between a flight and its' average co2 emissons
-    data['co2_percentage'] = ((data['avg_co2_route'] - data['co2_emissions'])/data['avg_co2_route'])
+    data.loc[:, 'co2_percentage'] = ((data['avg_co2_route'] - data['co2_emissions'])/data['avg_co2_route'])
     return data
 
 #######################################################
@@ -156,39 +158,56 @@ def add_airport_degree(airport_data, flight_data):
     airport_data["flights out"] = deg_out
     airport_data["flight_degree"] = [max(0,deg_in+deg_out) for deg_in, deg_out in zip(deg_in, deg_out)]
     return airport_data
+
+def add_airport_continent(airport_df):
+    airport_df['Continent'] = airport_df.apply(lambda row: get_continent_from_coordinates(row["Latitude Decimal Degrees"], row["Longitude Decimal Degrees"]), axis=1)
+    return airport_df
+
 #######################################################
 def add_manual_airport_data(airport_df):
     missing_data = {
-        "LHR": {
-            "Latitude Decimal Degrees": 51.470,
-            "Longitude Decimal Degrees": -0.454
-        },
         "NBO": {
             "Latitude Decimal Degrees": -1.333,
-            "Longitude Decimal Degrees": 36.927
+            "Longitude Decimal Degrees": 36.927,
+            "Country": "KENYA"
         },
         "ICN": {
             "Latitude Decimal Degrees": 37.469,
-            "Longitude Decimal Degrees": 126.450
+            "Longitude Decimal Degrees": 126.450,
+            "Country": "SOUTH KOREA"
         },
         "ATH": {
             "Latitude Decimal Degrees": 37.936401,
-            "Longitude Decimal Degrees": 23.9445
+            "Longitude Decimal Degrees": 23.9445,
+            "Country": "GREECE"
         },
         "PVG": {
             "Latitude Decimal Degrees": 31.143,
-            "Longitude Decimal Degrees": 121.805
+            "Longitude Decimal Degrees": 121.805,
+            "Country": "CHINA"
         },
         "SAW": {
             "Latitude Decimal Degrees": 40.898,
-            "Longitude Decimal Degrees": 29.309
+            "Longitude Decimal Degrees": 29.309,
+            "Country": "TURKEY"
         },
         "DME": {
             "Latitude Decimal Degrees": 55.408,
-            "Longitude Decimal Degrees": 37.906
+            "Longitude Decimal Degrees": 37.906,
+            "Country": "RUSSIA"
+        },
+        "LHR": {
+            "Latitude Decimal Degrees": 51.470,
+            "Longitude Decimal Degrees": -0.454,
+            "Country": "UNITED KINGDOM"
+        },
+        "MNL": {
+            "Latitude Decimal Degrees": 14.509,
+            "Longitude Decimal Degrees": 121.019,
+            "Country": "PHILIPPINES"
         }
     }
-
+    
     for airport, missing_data in missing_data.items():
         if not (airport in airport_df['IATA Code'].values):
             new_row = pd.DataFrame([{"IATA Code": airport, **missing_data}])
@@ -199,7 +218,16 @@ def add_manual_airport_data(airport_df):
             airport_df.at[index, name] = val
     return airport_df
 
-def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+def remove_duplicate_airport(airport_df):
+    """
+    Duplicate airports are removed and the correct is added manually 
+    """
+    airport_df = airport_df[airport_df["IATA Code"] != "MNL"]
+    airport_df = airport_df[airport_df["IATA Code"] != "LHR"]
+    return airport_df
+
+# def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_country","dest_airport_code","dest_country","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
+def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","dest_airport_code","aircraft_type","airline_number","airline_name","flight_number","departure_time","arrival_time","duration","stops","price","currency","co2_emissions","avg_co2_emission_for_this_route","co2_percentage"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
         flight_df = flight_df[wanted_cols]
@@ -208,12 +236,13 @@ def cleaning_func_flight_df(flight_df, wanted_cols=["from_airport_code","from_co
     return flight_df
 
 
-def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Latitude Decimal Degrees", "Longitude Decimal Degrees"]):
+def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Country", "Latitude Decimal Degrees", "Longitude Decimal Degrees"]):
 # def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "Latitude Decimal Degrees", "Longitude Decimal Degrees", "flights in", "flights out", "flight_degree"]):
     # Get wanted cols 
     if (len(wanted_cols) > 0):
         airport_df = airport_df[wanted_cols]
 
+    airport_df = remove_duplicate_airport(airport_df)
     airport_df = add_manual_airport_data(airport_df)
 
     # Get only relevant airports 
@@ -222,35 +251,10 @@ def cleaning_func_airport_df(airport_df, flight_df, wanted_cols=["IATA Code", "L
     
     return airport_df
 
+def get_gmt_time(times, codes, airport_df):
+    timezones = [get_timezone_from_IATA(airport_df, c) for c in tqdm(airport_df['IATA Code'], desc="Calculating timezones")]
+    timezone_lookup = dict(zip(airport_df['IATA Code'], timezones))
 
-# if __name__ == "__main__":
-#     import os 
-
-#     DATAFOLDERPATH = 'data'
-#     CLEAN_FLIGHT_PATH = f"{DATAFOLDERPATH}/clean_flights.csv"
-#     CLEAN_AIRPORT_PATH = f"{DATAFOLDERPATH}/clean_airport.csv"
-
-#     flight_data = data_loader.load_flight_data()
-#     airport_data = data_loader.load_airport_data(flight_data=flight_data, with_airport_degree=True)
-
-#     # get clean flight data
-#     if os.path.exists(CLEAN_FLIGHT_PATH):
-#         clean_flight_df = pd.read_csv(CLEAN_FLIGHT_PATH)
-#     else:
-#         clean_flight_df = cleaning_func_flight_df(flight_data)
-#         clean_flight_df.to_csv(CLEAN_FLIGHT_PATH, index=False)
-
-#     # get clean airport data
-#     if os.path.exists(CLEAN_AIRPORT_PATH):
-#         clean_airport_df = pd.read_csv(CLEAN_AIRPORT_PATH)
-#     else:
-#         clean_airport_df = cleaning_func_airport_df(airport_data, flight_data)
-#         clean_airport_df.to_csv(CLEAN_AIRPORT_PATH, index=False)
+    gmt_tz = pytz.timezone('GMT')
     
-#     unique_flight_routes = get_unique_flight_routes(clean_flight_df)
-#     print(unique_flight_routes.head())
-
-#     print("airport data:", airport_data.shape)
-#     print("clean airport data:", clean_airport_df.shape)
-#     print("flight data:", flight_data.shape)
-#     print("clean flight data:", clean_flight_df.shape)
+    return [timezone_lookup[c].localize(t).astimezone(gmt_tz) for t, c in tqdm(zip(times, codes), desc="Adding GMT times to df")]

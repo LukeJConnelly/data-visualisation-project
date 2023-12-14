@@ -1,6 +1,6 @@
 import pytz
 from timezonefinder import TimezoneFinder
-import data_loader
+from utils import data_loader
 import pandas as pd
 from datetime import datetime
 import os
@@ -9,7 +9,7 @@ def get_timezone_from_IATA(airport_data, IATA):
     if IATA not in airport_data["IATA Code"].to_list():
         return None
 
-    lat, lon = tuple(airport_data[airport_data["IATA Code"] == IATA][["Latitude Degrees","Longitude Degrees"]].iloc[0])
+    lat, lon = tuple(airport_data[airport_data["IATA Code"] == IATA][["Latitude Decimal Degrees","Longitude Decimal Degrees"]].iloc[0])
     return get_timezone_from_coordinates(lat, lon)
 
 def get_timezone_from_saved_IATA(IATA):
@@ -130,9 +130,3 @@ if __name__ == "__main__":
         
     print(tz_diff.head())
     print(tz_diff.tail())
-
-    # timezones = [get_timezone_from_IATA(IATA) for IATA in airports]
-    # test_time_to_compare = datetime(2022, 4, 30, 14, 30, 0)
-
-    # print(timezones)
-    # print(get_time_diff_on_date(test_time_to_compare, timezones[0], timezones[1]))

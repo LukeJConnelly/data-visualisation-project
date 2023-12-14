@@ -1,49 +1,72 @@
-#sidebar-contents {
-    border-left: 3px solid black;
-    padding-left: 20px;
+#graph-container {
+    overflow-x: auto;
+    /* overflow-y: hidden; */
+    white-space: nowrap;
+    display: block;
+    max-height: 22vh;
 }
 
-#sidebar-graphs {
-    max-height: 65vh;
-    overflow-y: scroll;
+#graph-container > [class^="col-"] {
+    display: inline-block;
+    float: none;
+    max-height: 19vh;
 }
 
-.btn-primary {
-    background-color: #87CEEB;
-    border-color: #5CA6D1;
-
-    &:hover {
-        background-color: #5CA6D1;
-        border-color: #5CA6D1;
-    }
-
-    &:active {
-        background-color: #5CA6D1;
-        border-color: #5CA6D1;
-    }
+#graph-container::-webkit-scrollbar {
+    height: 1vh;
 }
 
-.btn-secondary {
-    background-color: #FFA07A;
-    border-color: #CC7A5C;
-
-    &:hover {
-        background-color: #CC7A5C;
-        border-color: #CC7A5C;
-    }
-
-    &:active {
-        background-color: #CC7A5C;
-        border-color: #CC7A5C;
-    }
+#graph-container::-webkit-scrollbar-track {
+    border-radius: 8px;
+    background-color: #e7e7e7;
+    border: 1px solid #cacaca;
 }
 
-.primary-label {
-    font-weight: 600;
-    color: #5CA6D1;
+#graph-container::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background-color: #7570b3;
 }
 
-.secondary-label {
-    font-weight: 600;
-    color: #CC7A5C;
+#map-container {
+    padding: 1%;
+    padding-left: 2%;
+}
+
+#flight-map-from-container, #flight-map-to-container {
+    max-width: 45%;
+    padding: 0;
+}
+
+.colourblind-label {
+    color: white !important;
+    padding-right: 10px;
+    margin: auto;
+    padding-left: 10px;
+    border-left: 1px solid white;
+    margin-left: 10px;
+}
+
+.nav-item {
+    color: white;
+}
+
+#colorblind-mode-input {
+    margin: auto;
+}
+
+#timezone-input {
+    margin: auto;
+    padding-left: 10px;
+}
+
+#price-hist .axistext, #co2-hist .axistext, #duration-hist .axistext, #airline-hist .axistext, #country-hist-from .axistext, #country-hist-to .axistext, #matrix .hovertext rect, #matrix .hovertext text.name{
+    display: none;
+}
+
+#matrix {
+    height: 100vh;
+}
+
+#matrix-container > [class^="col-"] {
+    margin: auto;
 }
