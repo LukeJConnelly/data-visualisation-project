@@ -6,7 +6,7 @@ import numpy as np
 import dash_bootstrap_components as dbc
 from utils.settings import get_colours
 
-def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True):
+def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True, show_unselected_input=False):
     fig = go.Figure()
 
     # Join airport data to flight data
@@ -15,16 +15,31 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
     grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
     grouped_flight_data = pd.merge(grouped_flight_data_from, grouped_flight_data_to, on=['from_airport_code', 'dest_airport_code', 'count'], suffixes=('_from', '_to')).drop(['IATA Code_from', 'IATA Code_to'], axis=1)
     
+    print("Get map: ", show_unselected_input)
     # FLIGHTS
-    fig.add_trace(go.Scattermapbox(
-        mode="lines",
-        lat=np.array(original_grouped_flight_data[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
-        lon=np.array(original_grouped_flight_data[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
-        line=dict(width=1, color='gray'),
-        name="Flights",
-        opacity=0.05,
-    ))
-    
+    if(show_unselected_input):
+
+        # Calculating unselected rows
+        merged_df = pd.merge(original_grouped_flight_data, grouped_flight_data, 
+                            how='outer', 
+                            on=['from_airport_code', 'dest_airport_code', 'count'], 
+                            indicator=True)
+
+        # Filter out the rows that are only in the original DataFrame
+        unselected_rows = merged_df[merged_df['_merge'] == 'left_only']
+        unselected_rows = unselected_rows.drop(columns=['_merge'])
+        unselected_rows.rename(columns=lambda x: x.rstrip('_x'), inplace=True)
+
+
+        fig.add_trace(go.Scattermapbox(
+            mode="lines",
+            lat=np.array(unselected_rows[['Latitude Decimal Degrees_from', 'Latitude Decimal Degrees_to']]).flatten(),
+            lon=np.array(unselected_rows[['Longitude Decimal Degrees_from', 'Longitude Decimal Degrees_to']]).flatten(),
+            line=dict(width=1, color='gray'),
+            name="Flights",
+            opacity=0.02,
+        ))
+        
     
     # FLIGHTS
     fig.add_trace(go.Scattermapbox(
