@@ -63,14 +63,15 @@ app.layout = html.Div([
             className='m-2'),
     dbc.Row(id='table-container', 
             children=[
-
-                #get_histogram_price(flight_data),
-                        dbc.Label("Matrix airport sort by:"),
-                        dcc.Dropdown(['IATA Code', 'Country', 'Continent'], 'IATA Code', id='matrix-dropdown'),
-                        get_matrix(flight_data, airport_data, sort_by="IATA Code") if not SAMPLE_MODE else None,
                         get_table(flight_data, airport_data),
             ], 
             className='m-2'),
+    dbc.Row(id='matrix-container',
+            children=[
+                dbc.Col(children=[dbc.Label("Sort Matrix By:"),
+                dcc.Dropdown(['IATA Code', 'Country', 'Continent'], 'Continent', id='matrix-dropdown', clearable=False)], width=2),
+                dbc.Col(get_matrix(flight_data, airport_data, sort_by="Continent") if not SAMPLE_MODE else None, width=8)
+            ], style={'height': '100vh'}, className='m-2'),
 ])
 
 # If you are going to filter flight_data in any way, use this function here

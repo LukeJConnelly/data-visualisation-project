@@ -62,3 +62,11 @@
 #price-hist .axistext, #co2-hist .axistext, #duration-hist .axistext, #airline-hist .axistext, #country-hist-from .axistext, #country-hist-to .axistext, #matrix .hovertext rect, #matrix .hovertext text.name{
     display: none;
 }
+
+#matrix {
+    height: 100vh;
+}
+
+#matrix-container > [class^="col-"] {
+    margin: auto;
+}
