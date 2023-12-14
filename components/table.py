@@ -1,6 +1,4 @@
-from turtle import color
 from dash import dash_table
-from matplotlib.font_manager import font_family_aliases
 from utils.settings import get_colours
 
 from utils import data_filtering

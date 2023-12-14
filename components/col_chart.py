@@ -1,9 +1,7 @@
-from turtle import bgcolor
 from dash import dcc
 import plotly.express as px
-from utils.settings import get_colours, default_chart_height, get_neutral_colour, default_bg_color, neutral_colour_hover, get_colours_hover
+from utils.settings import default_chart_height, get_neutral_colour, default_bg_color, neutral_colour_hover, get_colours_hover
 
-from utils.airport_country_mapping import get_flight_df_with_country
 from utils.time import convert_duration_to_hours
 import plotly.express as px
 

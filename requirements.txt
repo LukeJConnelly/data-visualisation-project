@@ -9,4 +9,3 @@ tqdm==4.66.1
 geopy==2.4.1
 pycountry==22.3.5
 pycountry-convert==0.7.2
-bleach==4.1.0

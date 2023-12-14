@@ -14,11 +14,3 @@ def get_continent_from_coordinates(latitude, longitude):
         return country_to_continent(location.raw["address"]["country_code"])
     else:
         return 'Unknown'
-
-if __name__ == "__main__":
-    # Example coordinates for New York City
-    latitude = 40.7128
-    longitude = -74.0060
-
-    continent = get_continent_from_coordinates(latitude, longitude)
-    print(f'The continent is: {continent}')

@@ -3,7 +3,6 @@ import plotly.graph_objects as go
 # from components.country_airport_dicts import airport_to_country
 import pandas as pd
 import numpy as np
-import dash_bootstrap_components as dbc
 from utils.settings import get_colours, get_colours_hover
 
 def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True, show_unselected_input=False):
@@ -15,7 +14,6 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
     grouped_flight_data_to = pd.merge(grouped_flight_data_counts, airport_data, left_on='dest_airport_code', right_on='IATA Code')
     grouped_flight_data = pd.merge(grouped_flight_data_from, grouped_flight_data_to, on=['from_airport_code', 'dest_airport_code', 'count'], suffixes=('_from', '_to')).drop(['IATA Code_from', 'IATA Code_to'], axis=1)
     
-    print("Get map: ", show_unselected_input)
     # FLIGHTS
     if(show_unselected_input):
 

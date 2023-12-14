@@ -5,8 +5,6 @@ import plotly.express as px
 from utils import data_filtering
 
 def get_sidebar(flight_data, airport_data, from_country_airport_dict, dest_country_airport_dict):
-    print(flight_data.columns)
-    # ? is this just initial? i.e. will this overwrite callbacks or vise verse? 
     aircraft_type_count = data_filtering.get_aircraft_type_count(flight_data)
     return html.Div(id='sidebar-contents', children=[
         html.H3('Stats & Filter'),

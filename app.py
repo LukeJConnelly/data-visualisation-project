@@ -1,4 +1,3 @@
-from sre_parse import State
 from dash import Dash, html, callback_context, no_update
 from dash.dependencies import Input, Output
 from dash import dcc
@@ -10,7 +9,6 @@ from components.time_picker import get_time_bar, get_date_hist, get_days_of_week
 from components.legend import get_legend
 import dash_bootstrap_components as dbc
 import pandas as pd
-from functools import reduce
 from utils.settings import get_colours, set_colour_blind_mode
 from utils.airport_country_mapping import get_flight_df_with_country
 

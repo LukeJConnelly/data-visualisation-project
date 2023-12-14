@@ -1,4 +1,3 @@
-from bleach import clean
 import pandas as pd
 import os
 import json
@@ -6,7 +5,6 @@ import ast
 
 from utils import data_preprocessing
 from utils import data_filtering
-# import data_preprocessing
 
 def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_airport_file_path="data/GlobalAirportDatabase/GlobalAirportDatabase.txt"):
     """
@@ -73,7 +71,6 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
     airport_df = data_preprocessing.convert_airport_df(airport_df)
 
     airport_country_df = data_filtering.get_airport_country_df(flight_df, airport_df)
-    # airport_df = pd.merge(airport_df, airport_country_df, left_on='IATA Code', right_on='airport')
 
     # clean data 
     clean_flight_df = data_preprocessing.cleaning_func_flight_df(flight_df)
@@ -92,7 +89,6 @@ def load_data(sample_mode=False, raw_flights_file_path= "data/flights.csv", raw_
         file.write(json.dumps({"version": LATEST_VERSION}))
 
     # return clean_flight_df, clean_airport_df
-    # Yay recursion! <3 
     return load_data(sample_mode, raw_flights_file_path, raw_airport_file_path)
 
 if __name__ == "__main__":

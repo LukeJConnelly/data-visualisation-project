@@ -130,9 +130,3 @@ if __name__ == "__main__":
         
     print(tz_diff.head())
     print(tz_diff.tail())
-
-    # timezones = [get_timezone_from_IATA(IATA) for IATA in airports]
-    # test_time_to_compare = datetime(2022, 4, 30, 14, 30, 0)
-
-    # print(timezones)
-    # print(get_time_diff_on_date(test_time_to_compare, timezones[0], timezones[1]))

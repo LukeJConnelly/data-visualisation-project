@@ -11,6 +11,3 @@ GlobalAirportDatabase:
 airport:
   source: "https://ourairports.com/data/"
   data_download_date: 2023-09-14
-
-
-  

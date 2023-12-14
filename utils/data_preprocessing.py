@@ -59,7 +59,6 @@ def clean_co2(data):
 
     # calculating and inserting avg c02 emissions for each route
     groups = data.groupby(["from_airport_code", "dest_airport_code"])["co2_emissions"].mean()
-    # ! Gives some warning
     data.loc[:, 'avg_co2_route'] = data.apply(lambda x: groups[(x['from_airport_code'], x['dest_airport_code'])], axis=1)
 
     # calculating and inserting difference between a flight and its' average co2 emissons
@@ -259,36 +258,3 @@ def get_gmt_time(times, codes, airport_df):
     gmt_tz = pytz.timezone('GMT')
     
     return [timezone_lookup[c].localize(t).astimezone(gmt_tz) for t, c in tqdm(zip(times, codes), desc="Adding GMT times to df")]
-
-
-# if __name__ == "__main__":
-#     import os 
-
-#     DATAFOLDERPATH = 'data'
-#     CLEAN_FLIGHT_PATH = f"{DATAFOLDERPATH}/clean_flights.csv"
-#     CLEAN_AIRPORT_PATH = f"{DATAFOLDERPATH}/clean_airport.csv"
-
-#     flight_data = data_loader.load_flight_data()
-#     airport_data = data_loader.load_airport_data(flight_data=flight_data, with_airport_degree=True)
-
-#     # get clean flight data
-#     if os.path.exists(CLEAN_FLIGHT_PATH):
-#         clean_flight_df = pd.read_csv(CLEAN_FLIGHT_PATH)
-#     else:
-#         clean_flight_df = cleaning_func_flight_df(flight_data)
-#         clean_flight_df.to_csv(CLEAN_FLIGHT_PATH, index=False)
-
-#     # get clean airport data
-#     if os.path.exists(CLEAN_AIRPORT_PATH):
-#         clean_airport_df = pd.read_csv(CLEAN_AIRPORT_PATH)
-#     else:
-#         clean_airport_df = cleaning_func_airport_df(airport_data, flight_data)
-#         clean_airport_df.to_csv(CLEAN_AIRPORT_PATH, index=False)
-    
-#     unique_flight_routes = get_unique_flight_routes(clean_flight_df)
-#     print(unique_flight_routes.head())
-
-#     print("airport data:", airport_data.shape)
-#     print("clean airport data:", clean_airport_df.shape)
-#     print("flight data:", flight_data.shape)
-#     print("clean flight data:", clean_flight_df.shape)
