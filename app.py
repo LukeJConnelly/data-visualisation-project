@@ -1,3 +1,4 @@
+from sre_parse import State
 from dash import Dash, html, callback_context, no_update
 from dash.dependencies import Input, Output
 from dash import dcc
@@ -57,7 +58,7 @@ app.layout = html.Div([
     dbc.Row(id='map-container',
             children=[dbc.Col(id='flight-map-from-container',
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True)]),
-                      dbc.Col(id='legend', children=get_legend(*get_colours()), width=1),
+                      dbc.Col(id='legend', children=get_legend(*get_colours(), False), width=1),
                       dbc.Col(id='flight-map-to-container',
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False)])],
             className='m-2'),
@@ -106,9 +107,10 @@ app.layout = html.Div([
     Input('country-hist-to', 'clickData'),
     Input("timezone-input", "value"),
     Input("colorblind-mode-input", "value"),
-    Input('matrix-dropdown', 'value')
+    Input('matrix-dropdown', 'value'),
+    Input('show-unselected-input', 'value')
 ])
-def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, airline, country_from, country_to, timezone_mode, colourblind_mode,  matrix_sorting_str):
+def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesFrom, timesTo, days, prices, durations, co2s, airline, country_from, country_to, timezone_mode, colourblind_mode,  matrix_sorting_str, show_unselected_input):
 
     # hacky fix for double histogram callbacking
     if (callback_context.triggered[0]['prop_id'] == 'days-of-week-hist.selectedData' and days and not days['points']):
@@ -121,6 +123,7 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         return no_update
     elif (callback_context.triggered[0]['prop_id'] == 'co2-hist.selectedData' and co2s and not co2s['points']):
         return no_update
+    
     
     set_colour_blind_mode(colourblind_mode[-1] == 1)
     
@@ -169,8 +172,8 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         flight_data = flight_data.loc[flight_data.apply(lambda x: country_to['points'][0]['x'] == x['dest_country'], axis=1)]
 
     output_graphs = [
-        get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True).figure,
-        get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False).figure,
+        get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True, show_unselected_input=(show_unselected_input[-1] == 1)).figure,
+        get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False, show_unselected_input=(show_unselected_input[-1] == 1)).figure,
         get_date_hist(flight_data, time_column_suffix, MIN_DAY, MAX_DAY).figure,
         get_time_bar(flight_data, time_column_suffix, is_from=True).figure,
         get_time_bar(flight_data, time_column_suffix, is_from=False).figure,
@@ -183,7 +186,7 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_histogram_airline(flight_data).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
-        get_legend(*get_colours()),
+        get_legend(*get_colours(),( show_unselected_input[-1] == 1)),
         get_matrix(ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA, sort_by=matrix_sorting_str).figure
     ]
     
