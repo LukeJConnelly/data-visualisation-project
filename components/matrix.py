@@ -69,8 +69,7 @@ def get_matrix(flight_data, airport_data,sort_by="Country"):
     # for i in range(1, len(flight_df.columns)):
     # lines.append(go.Scatter(x=[len(flight_df.columns), 0], y=[0,len(flight_df.index)], mode='lines', line=dict(color='black')))
 
-    heatmap = go.Heatmap(x=flight_df.columns, y=flight_df.index, z=flight_df.values.T,
-    )
+    heatmap = go.Heatmap(x=flight_df.columns, y=flight_df.index, z=flight_df.values.T)
     fig = go.Figure(data=[heatmap, *lines])
 
 
@@ -120,6 +119,8 @@ def get_matrix(flight_data, airport_data,sort_by="Country"):
                 line=dict(color="#212529", width=2),
             )
 
+    country_lookup = {airport_data.iloc[i]["IATA Code"]: airport_data.iloc[i]["Country"].title() if len(airport_data.iloc[i]["Country"]) >= 4 else airport_data.iloc[i]["Country"] for i in range(len(airport_data))}
+
     fig.update_layout(
         xaxis=dict(showgrid=False, tickfont=dict(size=10), ticktext=[x for x in flight_df.columns], tickvals=[i for i in range(len(flight_df.columns))], side="top"),
         yaxis=dict(showgrid=False, autorange="reversed", scaleanchor="x", side="left", tickfont=dict(size=10), ticktext=[x for x in flight_df.index], tickvals=[i for i in range(len(flight_df.index))]),
@@ -130,9 +131,12 @@ def get_matrix(flight_data, airport_data,sort_by="Country"):
         font_family="Segoe UI",
         margin=dict(t=0, b=5, l=0, r=5),
     ).update_traces(
-        hovertemplate="%{y} -> %{x} : %{z:.1d} flights",
+        hoverongaps=False,
+        customdata=np.stack(([[country_lookup[c] for c in flight_df.columns.to_list()]] * len(flight_df), [[country_lookup[c]] * len(flight_df) for c in flight_df.columns]), axis=-1),
+        # customdata=[f"({country_lookup[flight_df.columns[j]]})" for i in range(len(flight_df.index)) for j in range(len(flight_df.columns))],
+        # text=[f"{flight_df.columns[j]} ({country_lookup[flight_df.columns[j]]})-> {flight_df.index[i]} ({country_lookup[flight_df.index[i]]}): {flight_df.iloc[i,j]} flights" for i in range(len(flight_df.index)) for j in range(len(flight_df.columns))]
+        hovertemplate="%{y} (%{customdata[1]}) -> %{x} (%{customdata[0]}): %{z:.1d} flights",
     )
-
 
 
     # for i, row in tqdm(enumerate(flight_df.index)):

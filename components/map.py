@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
-from utils.settings import get_colours
+from utils.settings import get_colours, get_colours_hover
 
 def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=True, show_unselected_input=False):
     fig = go.Figure()
@@ -65,8 +65,9 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
                                        lon=[airport['Longitude Decimal Degrees']],
                                        mode='markers',
                                        marker=go.scattermapbox.Marker(size=round((np.power(total_flights[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights) + 1, color='black'),
-                                       text=f"{airport['IATA Code']} - {airport['Country']} - {total_flights[i]} flights",
+                                       text=f"{airport['IATA Code']} - {airport['Country'].title() if len(airport['Country']) >= 4 else airport['Country']} - {total_flights[i]} flights",
                                        hoverinfo='text',
+                                       hoverlabel=dict(font_family="Segoe UI", bgcolor="black"),
                                        customdata=[airport['IATA Code']],
                                        opacity=0.2 if is_filtered_data else 1,))
 
@@ -79,8 +80,9 @@ def get_map(original_grouped_flight_data, flight_data, airport_data, is_from=Tru
                 lon=[airport['Longitude Decimal Degrees']],
                 marker=dict(size=round((np.power(selected_totals[i], exponent) - exp_min_total_flights) * 20 / exp_max_total_flights), color=get_colours()[is_from]),
                 name=airport['IATA Code'],
-                text=f"{airport['IATA Code']} - {airport['Country']} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
-                hoverinfo='text'
+                text=f"{airport['IATA Code']} - {airport['Country'].title() if len(airport['Country']) >= 4 else airport['Country']} - {selected_totals[i]} flights" + (f" of {total_flights[i]} selected" if is_filtered_data else ""),
+                hoverinfo='text',
+                hoverlabel=dict(font_family="Segoe UI", bgcolor=get_colours_hover()[is_from]),
             ))
 
     fig.update_layout(mapbox_style='carto-positron',  margin={"r":0,"t":0,"l":0,"b":0}, showlegend=False, mapbox_bounds={"west": -180, "east": 180, "south": -90, "north": 90})

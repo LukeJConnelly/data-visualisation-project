@@ -11,8 +11,8 @@ def get_table_data(flight_data, airport_data):
     flight_data_table = get_flight_df_with_country(flight_data_table, airport_data)
 
     new_col_names = {
-        "from_country": "Departure country",
         "from_airport_code": "Departure airport code",
+        "from_country": "Departure country",
         "count": "# of flights",
         "dest_country": "Arrival country",
         "dest_airport_code": "Arrival airport code",

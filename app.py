@@ -58,7 +58,7 @@ app.layout = html.Div([
     dbc.Row(id='map-container',
             children=[dbc.Col(id='flight-map-from-container',
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=True)]),
-                      dbc.Col(id='legend', children=get_legend(*get_colours(), False), width=1),
+                      dbc.Col(id='legend', children=get_legend(*get_colours(), [0]), width=1),
                       dbc.Col(id='flight-map-to-container',
                               children=[get_map(ORIGINAL_FLIGHT_DATA_GROUPED, flight_data, airport_data, is_from=False)])],
             className='m-2'),
@@ -187,7 +187,7 @@ def update_everything_on_selects(selectedDataFrom, selectedDataTo, dates, timesF
         get_histogram_airline(flight_data).figure,
         get_table_data(flight_data, airport_data).to_dict("records"),
         get_table_header_styling(),
-        get_legend(*get_colours(),( show_unselected_input[-1] == 1)),
+        get_legend(*get_colours(),( show_unselected_input )),
         get_matrix(ORIGINAL_FLIGHT_DATA, ORIGINAL_AIRPORT_DATA, sort_by=matrix_sorting_str).figure
     ]
     
